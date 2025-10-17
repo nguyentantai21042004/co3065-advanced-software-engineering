@@ -171,19 +171,3 @@ Once the application is running, API documentation will be available at:
    docker-compose build --no-cache
    docker-compose up -d
    ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test your changes in the Docker environment
-5. Submit a pull request
-
-## 📄 License
-
-This project is developed for CO3065 Advanced Software Engineering course.
-
----
-
-**Happy Learning with AI Coach! 🎓🤖**
