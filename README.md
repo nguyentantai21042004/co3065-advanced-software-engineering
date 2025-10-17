@@ -1,6 +1,6 @@
 # AI Coach - Personal Skill Development Platform
 
-## 🎯 Vision
+## Vision
 
 **AI Coach** is a personalized skill development platform designed to help employees and students improve their capabilities through intelligent guidance and actionable plans.
 
@@ -11,7 +11,7 @@
 - **Progress Tracking**: Monitor and analyze skill improvement over time
 - **Achievable Goals**: System helps users choose realistic and sustainable objectives
 
-## 🚀 Technical Stack
+## Technical Stack
 
 - **Backend**: Java 17 with Spring Boot 3.2.0
 - **Database**: PostgreSQL 15 with JPA/Hibernate
@@ -20,13 +20,13 @@
 - **Build Tool**: Maven 3.9.8
 - **Admin Interface**: pgAdmin 4 for database management
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before running this project, ensure you have the following installed:
 - Docker and Docker Compose
 - Git
 
-## 🛠️ Setup Instructions
+## Setup Instructions
 
 ### 1. Clone the Repository
 ```bash
@@ -43,13 +43,13 @@ cp env-template .env
 Edit the `.env` file with your preferred settings:
 ```env
 # Database Configuration
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=admin123
-POSTGRES_DB=co3065_db
+POSTGRES_USER admin
+POSTGRES_PASSWORD admin123
+POSTGRES_DB co3065_db
 
 # pgAdmin Configuration
-PGADMIN_EMAIL=admin@example.com
-PGADMIN_PASSWORD=admin123
+PGADMIN_EMAIL admin@example.com
+PGADMIN_PASSWORD admin123
 ```
 
 ### 3. Start the Development Environment
@@ -62,11 +62,11 @@ docker-compose ps
 ```
 
 ### 4. Verify Services
-- **Application**: http://localhost:8080
-- **pgAdmin**: http://localhost:5050
-- **PostgreSQL**: localhost:5432
+- Application: http://localhost:8080
+- pgAdmin: http://localhost:5050
+- PostgreSQL: localhost:5432
 
-## 🔧 Development Workflow
+## Development Workflow
 
 ### Accessing the Java Development Container
 ```bash
@@ -90,15 +90,15 @@ mvn spring-boot:run
 
 ### Database Management
 Access pgAdmin at http://localhost:5050:
-- **Email**: admin@example.com
-- **Password**: admin123
+- Email: admin@example.com
+- Password: admin123
 
 Connect to PostgreSQL:
-- **Host**: postgres (or localhost from host machine)
-- **Port**: 5432
-- **Database**: co3065_db
-- **Username**: admin
-- **Password**: admin123
+- Host: postgres (or localhost from host machine)
+- Port: 5432
+- Database: co3065_db
+- Username: admin
+- Password: admin123
 
 ### Useful Commands
 ```bash
@@ -112,11 +112,11 @@ docker-compose restart
 # Stop all services
 docker-compose down
 
-# Stop and remove volumes (⚠️ This will delete all data)
+# Stop and remove volumes (This will delete all data)
 docker-compose down -v
 ```
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 co3065-advanced-software-engineering/
@@ -132,7 +132,7 @@ co3065-advanced-software-engineering/
 └── README.md
 ```
 
-## 🤖 AI Integration
+## AI Integration
 
 The platform integrates with Google Gemini API to provide:
 - Personalized skill assessments
@@ -140,17 +140,17 @@ The platform integrates with Google Gemini API to provide:
 - Action plan generation
 - Progress analysis and insights
 
-## 📚 API Documentation
+## API Documentation
 
 Once the application is running, API documentation will be available at:
-- **Swagger UI**: http://localhost:8080/swagger-ui.html
-- **OpenAPI JSON**: http://localhost:8080/v3/api-docs
+- Swagger UI: http://localhost:8080/swagger-ui.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
-1. **Port already in use**
+1. Port already in use
    ```bash
    # Check what's using the port
    lsof -i :8080
@@ -158,14 +158,14 @@ Once the application is running, API documentation will be available at:
    lsof -i :5050
    ```
 
-2. **Database connection refused**
+2. Database connection refused
    ```bash
    # Check if PostgreSQL is healthy
    docker-compose ps
    docker-compose logs postgres
    ```
 
-3. **Container build failures**
+3. Container build failures
    ```bash
    # Rebuild containers
    docker-compose build --no-cache
