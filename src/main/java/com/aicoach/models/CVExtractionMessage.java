@@ -45,7 +45,7 @@ public class CVExtractionMessage implements Serializable {
     /**
      * File size in bytes
      */
-    private long fileSize;
+    private Long fileSize;
 
     /**
      * Timestamp when message was created
@@ -60,7 +60,7 @@ public class CVExtractionMessage implements Serializable {
     /**
      * Number of retry attempts
      */
-    private int retryCount;
+    private Integer retryCount;
 
     /**
      * Create a new message for CV extraction
@@ -82,6 +82,9 @@ public class CVExtractionMessage implements Serializable {
      * Increment retry count
      */
     public void incrementRetry() {
+        if (this.retryCount == null) {
+            this.retryCount = 0;
+        }
         this.retryCount++;
     }
 }

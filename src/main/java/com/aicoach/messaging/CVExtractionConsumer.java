@@ -5,6 +5,7 @@ import java.util.UUID;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -37,6 +38,14 @@ public class CVExtractionConsumer {
     private final ExtractionResultRepository extractionResultRepository;
     private final ExtractionNotifyProducer extractionNotifyProducer;
 
+    @PostConstruct
+    public void init() {
+        log.info("========================================");
+        log.info("CVExtractionConsumer BEAN INITIALIZED");
+        log.info("Will listen to queue: {}", RabbitMQConfig.CV_EXTRACTION_QUEUE);
+        log.info("========================================");
+    }
+
     /**
      * Listen to CV extraction queue and process messages
      * 
@@ -44,10 +53,12 @@ public class CVExtractionConsumer {
      */
     @RabbitListener(queues = RabbitMQConfig.CV_EXTRACTION_QUEUE)
     public void processExtractionTask(CVExtractionMessage message) {
+        log.info("==> Entered processExtractionTask [RabbitListener] with message taskId={}, fileId={}", message.getTaskId(), message.getFileId());
         log.info("Received CV extraction task: taskId={}, fileId={}, fileName={}",
                 message.getTaskId(), message.getFileId(), message.getFileName());
 
         try {
+            log.info("[processExtractionTask] About to downloadFile from MinIO, fileId={}", message.getFileId());
             log.info("Downloading file from storage: fileId={}", message.getFileId());
             InputStream fileStream = fileStorage.downloadFile(message.getFileId());
             String fileName = message.getFileName();
