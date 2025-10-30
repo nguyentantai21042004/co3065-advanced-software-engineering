@@ -95,7 +95,7 @@ run-api:
 
 run-consumer:
 	@echo "🎧 Running Consumer Service in dev container..."
-	mvn spring-boot:run -Dspring-boot.run.main-class=com.aicoach.cmd.consumer.CVProcessingConsumerApplication -Dspring-boot.run.profiles=consumer
+	mvn spring-boot:run -Dspring-boot.run.main-class=com.aicoach.cmd.consumer.CVProcessingConsumerApplication -Dspring-boot.run.profiles=consumer -Dspring.profiles.active=consumer
 
 run-tests:
 	@echo "🧪 Running tests..."

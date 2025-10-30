@@ -7,6 +7,7 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 /**
  * RabbitMQ Configuration
@@ -126,5 +127,20 @@ public class RabbitMQConfig {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(jsonMessageConverter());
         return template;
+    }
+
+    /**
+     * Container Factory with JSON converter for listeners
+     * ONLY active in consumer profile to prevent API from listening to queues
+     */
+    @Bean
+    @Profile("consumer")
+    public org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+            ConnectionFactory connectionFactory) {
+        org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory factory =
+            new org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(jsonMessageConverter());
+        return factory;
     }
 }

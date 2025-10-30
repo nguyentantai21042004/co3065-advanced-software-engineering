@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.aicoach.models.FileExtraction;
 import com.aicoach.repository.FileExtractor;
 import com.aicoach.usecase.FileExtractionUseCase;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * File Extraction Service Implementation
@@ -17,6 +18,7 @@ import com.aicoach.usecase.FileExtractionUseCase;
  */
 @Service
 @Transactional
+@Slf4j
 public class FileExtractionService implements FileExtractionUseCase {
 
     private final List<FileExtractor> extractors;
@@ -63,35 +65,50 @@ public class FileExtractionService implements FileExtractionUseCase {
 
     @Override
     public FileExtraction extractText(InputStream inputStream, String fileName) {
+        log.info("[FileExtractionService] extractText called with fileName: {}", fileName);
+        
         // Validate input
         if (inputStream == null) {
+            log.error("[FileExtractionService] ❌ Input stream is NULL!");
             return FileExtraction.failed(fileName, getFileType(fileName), "Input stream is null");
         }
+        log.info("[FileExtractionService] InputStream is valid");
 
         if (fileName == null || fileName.trim().isEmpty()) {
+            log.error("[FileExtractionService] ❌ fileName is NULL or EMPTY!");
             return FileExtraction.failed(fileName, getFileType(fileName), "File name is required");
         }
+        log.info("[FileExtractionService] fileName is valid: {}", fileName);
 
         // Find appropriate extractor
         FileExtractor extractor = findExtractor(fileName);
         if (extractor == null) {
+            log.error("[FileExtractionService] ❌ No extractor found for fileName: {}", fileName);
+            log.error("[FileExtractionService] Available extractors count: {}", extractors.size());
             return FileExtraction.failed(fileName, getFileType(fileName), 
                 "Unsupported file type. Supported types: PDF, DOCX, DOC");
         }
+        log.info("[FileExtractionService] ✅ Found extractor: {}", extractor.getClass().getSimpleName());
 
         // Extract text
         try {
+            log.info("[FileExtractionService] Calling extractor.extractText()...");
             String extractedText = extractor.extractText(inputStream, fileName);
+            log.info("[FileExtractionService] Extractor returned text, length: {}", 
+                extractedText != null ? extractedText.length() : "NULL");
             
             // Validate extracted text
             if (extractedText == null || extractedText.trim().isEmpty()) {
+                log.warn("[FileExtractionService] ⚠️ Extracted text is NULL or EMPTY!");
                 return FileExtraction.failed(fileName, getFileType(fileName), 
                     "No text content found in file");
             }
 
+            log.info("[FileExtractionService] ✅ Extraction successful, text length: {}", extractedText.length());
             return new FileExtraction(fileName, getFileType(fileName), extractedText);
             
         } catch (Exception e) {
+            log.error("[FileExtractionService] ❌ Exception during extraction: {}", e.getMessage(), e);
             return FileExtraction.failed(fileName, getFileType(fileName), 
                 "Failed to extract text: " + e.getMessage());
         }

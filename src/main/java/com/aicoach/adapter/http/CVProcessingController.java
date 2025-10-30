@@ -156,10 +156,19 @@ public class CVProcessingController {
     if (!exists) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(404, "File ID not found in db"));
     }
+
+    // Fetch file info from DB to get fileName
+    var uploadedFileEntity = uploadedFileRepository.findById(fileUUID).orElse(null);
+    String fileName = uploadedFileEntity != null ? uploadedFileEntity.getOriginalFileName() : null;
+    String contentType = uploadedFileEntity != null ? uploadedFileEntity.getContentType() : null;
+    Long fileSize = uploadedFileEntity != null ? uploadedFileEntity.getFileSize() : null;
+
     CVExtractionMessage msg = CVExtractionMessage.builder()
         .taskId(UUID.randomUUID().toString())
         .fileId(fileId)
-        .fileName(null) // can fetch from DB if needed
+        .fileName(fileName)
+        .fileType(contentType)
+        .fileSize(fileSize)
         .build();
     cvExtractionProducer.sendExtractionTask(msg);
     return ResponseEntity.ok(ApiResponse.success("Task accepted", null));
