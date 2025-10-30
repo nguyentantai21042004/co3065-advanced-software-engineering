@@ -99,18 +99,42 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Test Dependencies -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.platform</groupId>
-			<artifactId>junit-platform-launcher</artifactId>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+	<!-- File Processing Dependencies -->
+	<dependency>
+		<groupId>org.apache.pdfbox</groupId>
+		<artifactId>pdfbox</artifactId>
+		<version>3.0.1</version>
+	</dependency>
+	<dependency>
+		<groupId>org.apache.tika</groupId>
+		<artifactId>tika-core</artifactId>
+		<version>2.9.1</version>
+	</dependency>
+	<dependency>
+		<groupId>org.apache.tika</groupId>
+		<artifactId>tika-parsers-standard-package</artifactId>
+		<version>2.9.1</version>
+	</dependency>
+
+	<!-- MinIO Client (S3-Compatible Storage) -->
+	<dependency>
+		<groupId>io.minio</groupId>
+		<artifactId>minio</artifactId>
+		<version>8.5.7</version>
+	</dependency>
+
+	<!-- Test Dependencies -->
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-test</artifactId>
+		<scope>test</scope>
+	</dependency>
+	<dependency>
+		<groupId>org.junit.platform</groupId>
+		<artifactId>junit-platform-launcher</artifactId>
+		<scope>test</scope>
+	</dependency>
+</dependencies>
 
 	<build>
 		<extensions>

@@ -3,18 +3,18 @@ package co3065.ai_coach.adapter.http.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * Chuẩn response format cho tất cả API responses
- * Tương tự Resp struct trong Go
+ * Standard API Response Format
+ * Used for all HTTP API responses
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
-    
+
     private int errorCode;
     private String message;
     private T data;
     private Object errors;
 
-    // Private constructor - dùng builder pattern
+    // Private constructor
     private ApiResponse(int errorCode, String message, T data, Object errors) {
         this.errorCode = errorCode;
         this.message = message;
@@ -22,17 +22,17 @@ public class ApiResponse<T> {
         this.errors = errors;
     }
 
-    // Success response với data
+    // Success response with data
     public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<>(0, "Success", data, null);
     }
 
-    // Success response với custom message
+    // Success response with custom message
     public static <T> ApiResponse<T> success(String message, T data) {
         return new ApiResponse<>(0, message, data, null);
     }
 
-    // Success response không có data
+    // Success response without data
     public static <T> ApiResponse<T> success(String message) {
         return new ApiResponse<>(0, message, null, null);
     }
@@ -42,7 +42,7 @@ public class ApiResponse<T> {
         return new ApiResponse<>(errorCode, message, null, null);
     }
 
-    // Error response với validation errors
+    // Error response with validation errors
     public static <T> ApiResponse<T> error(int errorCode, String message, Object errors) {
         return new ApiResponse<>(errorCode, message, null, errors);
     }
@@ -64,4 +64,3 @@ public class ApiResponse<T> {
         return errors;
     }
 }
-
