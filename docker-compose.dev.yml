@@ -14,10 +14,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - MINIO_BUCKET_NAME=cv-files
 
   # --- Database Services ---
   postgres:
@@ -44,6 +50,46 @@ services:
           cpus: '0.75'
           memory: 1G
 
+  # --- Storage Services ---
+  minio:
+    image: minio/minio:latest
+    container_name: co3065-minio
+    hostname: minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"  # MinIO API
+      - "9001:9001"  # MinIO Console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+  # Create default bucket on startup
+  minio-init:
+    image: minio/mc:latest
+    container_name: co3065-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
+      /usr/bin/mc mb myminio/cv-files --ignore-existing;
+      /usr/bin/mc anonymous set download myminio/cv-files;
+      exit 0;
+      "
+
   # --- Management Interfaces ---
   pgadmin:
     image: dpage/pgadmin4:7.8
@@ -62,4 +108,5 @@ services:
 volumes:
   postgres_data:
   pgadmin_data:
+  minio_data:
 
