@@ -2,6 +2,7 @@ package com.aicoach.cmd.consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -18,6 +19,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  */
 @SpringBootApplication(scanBasePackages = "com.aicoach")
 @EnableScheduling
+@EnableRabbit
 public class CVProcessingConsumerApplication {
 
     private static final Logger logger = LoggerFactory.getLogger(CVProcessingConsumerApplication.class);
@@ -27,7 +29,6 @@ public class CVProcessingConsumerApplication {
         logger.info("🎧 CV Processing Consumer started successfully!");
         logger.info("📬 Listening to RabbitMQ for CV processing tasks...");
 
-        // Add a shutdown hook to log when the app exits
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("👋 CV Processing Consumer exited.");
         }));
