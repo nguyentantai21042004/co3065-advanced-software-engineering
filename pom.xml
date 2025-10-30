@@ -181,8 +181,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<!-- Default main class for the JAR -->
-					<mainClass>com.aicoach.cmd.api.AICoachServiceApplication</mainClass>
+					<!-- mainClass REMOVED to allow -Dspring-boot.run.mainClass dynamically! -->
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>

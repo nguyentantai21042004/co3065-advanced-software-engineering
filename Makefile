@@ -91,11 +91,11 @@ dev-ps:
 
 run-api:
 	@echo "🚀 Running API Service in dev container..."
-	mvn spring-boot:run -Dspring-boot.run.mainClass=com.aicoach.cmd.api.AICoachServiceApplication
+	mvn spring-boot:run -Dspring-boot.run.main-class=com.aicoach.cmd.api.AICoachServiceApplication
 
 run-consumer:
 	@echo "🎧 Running Consumer Service in dev container..."
-	mvn spring-boot:run -Dspring-boot.run.mainClass=com.aicoach.cmd.consumer.CVProcessingConsumerApplication
+	mvn spring-boot:run -Dspring-boot.run.main-class=com.aicoach.cmd.consumer.CVProcessingConsumerApplication -Dspring-boot.run.profiles=consumer
 
 run-tests:
 	@echo "🧪 Running tests..."

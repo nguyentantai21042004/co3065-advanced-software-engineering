@@ -32,6 +32,11 @@ public class RabbitMQConfig {
     public static final String CV_EXTRACTION_ROUTING_KEY = "cv.extraction";
     public static final String CV_EXTRACTION_DLQ_ROUTING_KEY = "cv.extraction.dlq";
 
+    // Notify queue for extraction result
+    public static final String EXTRACTION_NOTIFY_QUEUE = "extraction.notify.queue";
+    public static final String EXTRACTION_NOTIFY_EXCHANGE = "extraction.notify.exchange";
+    public static final String EXTRACTION_NOTIFY_ROUTING_KEY = "extraction.notify";
+
     /**
      * Main Exchange for CV processing
      */
@@ -86,6 +91,23 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(cvExtractionDeadLetterQueue)
                 .to(cvDeadLetterExchange)
                 .with(CV_EXTRACTION_DLQ_ROUTING_KEY);
+    }
+
+    @Bean
+    public DirectExchange extractionNotifyExchange() {
+        return new DirectExchange(EXTRACTION_NOTIFY_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Queue extractionNotifyQueue() {
+        return QueueBuilder.durable(EXTRACTION_NOTIFY_QUEUE).build();
+    }
+
+    @Bean
+    public Binding extractionNotifyBinding(Queue extractionNotifyQueue, DirectExchange extractionNotifyExchange) {
+        return BindingBuilder.bind(extractionNotifyQueue)
+                .to(extractionNotifyExchange)
+                .with(EXTRACTION_NOTIFY_ROUTING_KEY);
     }
 
     /**
