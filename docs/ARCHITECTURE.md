@@ -90,7 +90,7 @@ Dự án được tổ chức theo **Clean Architecture** với sự phân tách
 co3065.ai_coach/
 │
 ├── config/                           # Spring Configuration
-│   ├── ContentServiceApplication.java   # Main application class
+│   ├── AICoachServiceApplication.java   # Main application class
 │   └── CorsConfig.java                   # CORS configuration
 │
 ├── models/                           # DOMAIN LAYER
