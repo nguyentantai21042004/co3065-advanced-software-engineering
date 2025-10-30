@@ -87,7 +87,7 @@ Dự án được tổ chức theo **Clean Architecture** với sự phân tách
 ## Cấu trúc Package (Package Structure)
 
 ```
-co3065.ai_coach/
+com.aicoach/
 │
 ├── config/                           # Spring Configuration
 │   ├── AICoachServiceApplication.java   # Main application class
@@ -201,7 +201,7 @@ co3065.ai_coach/
 
 ### 1. Domain Layer (Core Business Logic)
 
-**Package**: `co3065.ai_coach.models`
+**Package**: `com.aicoach.models`
 
 **Đặc điểm:**
 - **Pure Java objects** - Không phụ thuộc vào framework
@@ -251,7 +251,7 @@ public class Course {
 
 ### 2. Use Case Layer (Application Business Rules)
 
-**Package**: `co3065.ai_coach.usecase`
+**Package**: `com.aicoach.usecase`
 
 **Cấu trúc:**
 - **Interface** (Port In): `CourseUseCase.java`
@@ -355,7 +355,7 @@ public class CreateCourseCommand {
 
 ### 3. Repository Layer (Port Out Interface)
 
-**Package**: `co3065.ai_coach.repository`
+**Package**: `com.aicoach.repository`
 
 **Repository Interface (Port Out):**
 ```java
@@ -379,7 +379,7 @@ public interface CourseRepository {
 
 ### 4. Infrastructure Layer (Adapter Implementation)
 
-**Package**: `co3065.ai_coach.repository.postgresql`
+**Package**: `com.aicoach.repository.postgresql`
 
 **A. JPA Repository Implementation (Adapter):**
 ```java
@@ -561,7 +561,7 @@ public class CourseSpecification {
 
 ### 5. Adapter Layer (HTTP/REST)
 
-**Package**: `co3065.ai_coach.adapter.http`
+**Package**: `com.aicoach.adapter.http`
 
 **A. REST Controller:**
 ```java
@@ -876,7 +876,7 @@ public class JpaCourseRepository implements CourseRepository {
 
 **Mô tả**: Encapsulate request parameters trong immutable command objects
 
-**Package**: `co3065.ai_coach.usecase.types`
+**Package**: `com.aicoach.usecase.types`
 
 **Cách sử dụng:**
 ```java
@@ -913,7 +913,7 @@ Course create(CreateCourseCommand command);
 
 **Mô tả**: Dynamic query building với type-safe predicates
 
-**Package**: `co3065.ai_coach.repository.postgresql.specification`
+**Package**: `com.aicoach.repository.postgresql.specification`
 
 **Cách triển khai:**
 ```java
@@ -1025,7 +1025,7 @@ public class ContentUnitMapper {
 
 **Mô tả**: Sử dụng objects đặc biệt để transfer data giữa layers
 
-**Package**: `co3065.ai_coach.adapter.http.dto`
+**Package**: `com.aicoach.adapter.http.dto`
 
 **Types:**
 - **Request DTOs**: Input từ client (`CreateCourseRequest`)
@@ -1291,7 +1291,7 @@ server:
 # Logging Configuration
 logging:
   level:
-    co3065.ai_coach: DEBUG
+    com.aicoach: DEBUG
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
 ```
