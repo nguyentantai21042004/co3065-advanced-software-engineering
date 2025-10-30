@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: "AI Coach"
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/co3065
+    username: admin
+    password: admin123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: NON_NULL
+
+server:
+  port: 8090
+
+logging:
+  level:
+    co3065.ai_coach: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
