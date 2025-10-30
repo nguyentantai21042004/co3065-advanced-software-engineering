@@ -36,6 +36,21 @@ minio:
   secret-key: ${MINIO_SECRET_KEY:minioadmin}
   bucket-name: ${MINIO_BUCKET_NAME:cv-files}
 
+# OpenAPI/Swagger Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    doc-expansion: none
+  packages-to-scan: co3065.ai_coach.adapter.http
+  paths-to-match: /api/**
+
 logging:
   level:
     co3065.ai_coach: DEBUG
