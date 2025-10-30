@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.aicoach.config.RabbitMQConfig;
@@ -24,11 +25,14 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Message Consumer for CV Extraction
- * 
+ *
  * Used by Consumer Service to listen and process CV extraction tasks from
  * RabbitMQ
+ *
+ * NOTE: This bean is ONLY active when 'consumer' profile is enabled
  */
 @Component
+@Profile("consumer")
 @RequiredArgsConstructor
 @Slf4j
 public class CVExtractionConsumer {
@@ -58,21 +62,39 @@ public class CVExtractionConsumer {
                 message.getTaskId(), message.getFileId(), message.getFileName());
 
         try {
-            log.info("[processExtractionTask] About to downloadFile from MinIO, fileId={}", message.getFileId());
-            log.info("Downloading file from storage: fileId={}", message.getFileId());
+            log.info("[STEP 1] Downloading file from MinIO storage, fileId={}", message.getFileId());
             InputStream fileStream = fileStorage.downloadFile(message.getFileId());
+            log.info("[STEP 1] ✅ File stream obtained: {}", (fileStream != null));
+            
             String fileName = message.getFileName();
+            log.info("[STEP 2] fileName from message: '{}'", fileName);
+            
             String fileType = (fileName != null && fileName.contains("."))
                     ? fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase()
                     : "";
+            log.info("[STEP 2] Detected fileType: '{}' (isEmpty: {})", fileType, fileType.isEmpty());
 
             FileExtraction extraction = null;
             UUID avatarId = null;
             String rawText = null;
+            
             if (fileType.equals("pdf") || fileType.equals("doc") || fileType.equals("docx")) {
-                // Text file: xử lý như trước
+                log.info("[STEP 3-DOC] Processing DOCUMENT type: {}", fileType);
                 extraction = fileExtractionUseCase.extractText(fileStream, fileName);
+                log.info("[STEP 3-DOC] Extraction success: {}, hasText: {}, textLength: {}", 
+                    extraction.isSuccess(), 
+                    extraction.getExtractedText() != null,
+                    extraction.getTextLength());
+                if (!extraction.isSuccess()) {
+                    log.error("[STEP 3-DOC] ❌ Extraction FAILED: {}", extraction.getErrorMessage());
+                }
                 rawText = extraction.getExtractedText();
+                if (rawText != null && rawText.length() > 0) {
+                    log.info("[STEP 3-DOC] Raw text preview (first 200 chars): {}", 
+                        rawText.length() > 200 ? rawText.substring(0, 200) + "..." : rawText);
+                } else {
+                    log.warn("[STEP 3-DOC] ⚠️ Raw text is NULL or EMPTY!");
+                }
             } else if (fileType.equals("png") || fileType.equals("jpg") || fileType.equals("jpeg")) {
                 // Đọc thành byte[] để không bị mất InputStream
                 ByteArrayOutputStream buffer = new ByteArrayOutputStream();

@@ -1,4 +1,7 @@
 spring:
+  config:
+    activate:
+      on-profile: consumer
   main:
     web-application-type: none
 
