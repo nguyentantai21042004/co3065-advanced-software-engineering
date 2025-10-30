@@ -75,7 +75,6 @@ services:
           cpus: '0.50'
           memory: 512M
 
-  # Create default bucket on startup
   minio-init:
     image: minio/mc:latest
     container_name: co3065-minio-init

@@ -1,7 +1,10 @@
+server:
+  port: 8090
+
 spring:
   application:
     name: "AI Coach"
-  
+
   datasource:
     url: jdbc:postgresql://localhost:5432/co3065
     username: admin
@@ -21,8 +24,10 @@ spring:
     property-naming-strategy: SNAKE_CASE
     default-property-inclusion: NON_NULL
 
-server:
-  port: 8090
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 # MinIO Configuration (S3-Compatible Storage)
 minio:
@@ -30,13 +35,6 @@ minio:
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
   secret-key: ${MINIO_SECRET_KEY:minioadmin}
   bucket-name: ${MINIO_BUCKET_NAME:cv-files}
-
-# File Upload Configuration
-spring:
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
 
 logging:
   level:
