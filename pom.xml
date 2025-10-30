@@ -11,10 +11,10 @@
 		<relativePath />
 	</parent>
 
-	<groupId>co3065</groupId>
-	<artifactId>ai_coach</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>ai_coach</name>
+	<groupId>com.aicoach</groupId>
+	<artifactId>aicoach</artifactId>
+	<version>1.0.0</version>
+	<name>AI Coach</name>
 	<description>
         Microservice responsible for content management, documents, and data.
     </description>
@@ -130,18 +130,24 @@
 		<version>2.3.0</version>
 	</dependency>
 
-	<!-- Test Dependencies -->
+	<!-- RabbitMQ / AMQP -->
 	<dependency>
 		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-test</artifactId>
-		<scope>test</scope>
-	</dependency>
-	<dependency>
-		<groupId>org.junit.platform</groupId>
-		<artifactId>junit-platform-launcher</artifactId>
-		<scope>test</scope>
-	</dependency>
-</dependencies>
+		<artifactId>spring-boot-starter-amqp</artifactId>
+		</dependency>
+
+		<!-- Test Dependencies -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<extensions>
@@ -152,10 +158,31 @@
 			</extension>
 		</extensions>
 		<plugins>
+			<!-- Maven Compiler Plugin with Lombok Annotation Processor -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.11.0</version>
+				<configuration>
+					<source>17</source>
+					<target>17</target>
+					<encoding>UTF-8</encoding>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+			
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+					<!-- Default main class for the JAR -->
+					<mainClass>com.aicoach.cmd.api.AICoachServiceApplication</mainClass>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>

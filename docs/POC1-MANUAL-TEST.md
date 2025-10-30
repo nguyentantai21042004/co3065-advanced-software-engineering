@@ -202,13 +202,13 @@ mvn test -X
 [INFO] -------------------------------------------------------
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
-[INFO] Running co3065.ai_coach.usecase.service.FileExtractionServiceTest
+[INFO] Running com.aicoach.usecase.service.FileExtractionServiceTest
 [INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0
-[INFO] Running co3065.ai_coach.models.FileExtractionTest
+[INFO] Running com.aicoach.models.FileExtractionTest
 [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
-[INFO] Running co3065.ai_coach.repository.fileextraction.PdfExtractorTest
+[INFO] Running com.aicoach.repository.fileextraction.PdfExtractorTest
 [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0
-[INFO] Running co3065.ai_coach.repository.fileextraction.DocxExtractorTest
+[INFO] Running com.aicoach.repository.fileextraction.DocxExtractorTest
 [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
 [INFO] Results:
