@@ -2,10 +2,17 @@ package com.aicoach.models;
 
 import java.time.LocalDateTime;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Builder;
+
 /**
  * Domain Model - File Extraction Result
  * Represents the result of extracting text from a file
  */
+@Data
+@AllArgsConstructor 
+@Builder
 public class FileExtraction {
     private final String fileName;
     private final String fileType;

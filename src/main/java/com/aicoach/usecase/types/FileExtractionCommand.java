@@ -2,17 +2,14 @@ package com.aicoach.usecase.types;
 
 import java.io.InputStream;
 
-/**
- * Command object for file extraction operation
- */
 public class FileExtractionCommand {
     private final InputStream inputStream;
     private final String fileName;
     private final String contentType;
     private final long fileSize;
 
-    public FileExtractionCommand(InputStream inputStream, String fileName, 
-                                 String contentType, long fileSize) {
+    public FileExtractionCommand(InputStream inputStream, String fileName,
+            String contentType, long fileSize) {
         this.inputStream = inputStream;
         this.fileName = fileName;
         this.contentType = contentType;
@@ -42,4 +39,3 @@ public class FileExtractionCommand {
         return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
     }
 }
-

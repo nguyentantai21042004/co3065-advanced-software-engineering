@@ -116,6 +116,18 @@
 		<version>2.9.1</version>
 	</dependency>
 
+	<!-- Apache POI for DOCX Image Extraction -->
+	<dependency>
+		<groupId>org.apache.poi</groupId>
+		<artifactId>poi-ooxml</artifactId>
+		<version>5.2.5</version>
+	</dependency>
+	<dependency>
+		<groupId>org.apache.poi</groupId>
+		<artifactId>poi</artifactId>
+		<version>5.2.5</version>
+	</dependency>
+
 	<!-- MinIO Client (S3-Compatible Storage) -->
 	<dependency>
 		<groupId>io.minio</groupId>

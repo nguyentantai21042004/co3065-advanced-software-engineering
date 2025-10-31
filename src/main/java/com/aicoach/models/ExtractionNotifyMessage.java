@@ -1,5 +1,10 @@
 package com.aicoach.models;
 
+import lombok.Data;
+import lombok.Builder;
+
+@Data
+@Builder
 public class ExtractionNotifyMessage {
     private String resultId;
 

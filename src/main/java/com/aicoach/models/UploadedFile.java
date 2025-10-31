@@ -2,10 +2,16 @@ package com.aicoach.models;
 
 import java.time.LocalDateTime;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Builder;
 /**
  * Domain Model - Uploaded File
  * Represents a file that has been uploaded to storage
  */
+@Data
+@AllArgsConstructor 
+@Builder
 public class UploadedFile {
     private final String fileId;
     private final String originalFileName;

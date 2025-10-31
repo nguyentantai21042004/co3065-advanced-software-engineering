@@ -25,7 +25,7 @@ public class CVExtractionProducer {
      * 
      * @param message CV extraction message
      */
-    public void sendExtractionTask(CVExtractionMessage message) {
+    public void sendExtractionTask(CVExtractionMessage message) throws Exception {
         try {
             log.info("Sending CV extraction task to queue: taskId={}, fileId={}",
                     message.getTaskId(), message.getFileId());
@@ -40,7 +40,7 @@ public class CVExtractionProducer {
         } catch (Exception e) {
             log.error("Failed to send CV extraction task: taskId={}, error={}",
                     message.getTaskId(), e.getMessage(), e);
-            throw new RuntimeException("Failed to send message to queue", e);
+            throw new Exception("Failed to send message to queue", e);
         }
     }
 

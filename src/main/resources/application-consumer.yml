@@ -7,5 +7,5 @@ spring:
 
 logging:
   level:
-    org.springframework.amqp: DEBUG
-    com.aicoach.messaging: DEBUG
+    org.springframework.amqp: INFO
+    com.aicoach.messaging: INFO

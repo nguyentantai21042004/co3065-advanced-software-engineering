@@ -1,4 +1,4 @@
-package com.aicoach.repository.filestorage;
+package com.aicoach.infrastructure.filestorage;
 
 import java.io.InputStream;
 import java.util.UUID;
@@ -6,8 +6,9 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.aicoach.infrastructure.FileStorage;
 import com.aicoach.models.UploadedFile;
-import com.aicoach.repository.FileStorage;
+
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -33,12 +34,10 @@ public class MinioFileStorage implements FileStorage {
     @Override
     public UploadedFile uploadFile(InputStream inputStream, String fileName,
             String contentType, long fileSize) throws Exception {
-        // Generate unique file ID
         String fileId = UUID.randomUUID().toString();
         String fileExtension = getFileExtension(fileName);
         String storagePath = fileId + (fileExtension.isEmpty() ? "" : "." + fileExtension);
 
-        // Upload to MinIO
         minioClient.putObject(
                 PutObjectArgs.builder()
                         .bucket(bucketName)
@@ -52,7 +51,6 @@ public class MinioFileStorage implements FileStorage {
 
     @Override
     public InputStream downloadFile(String fileId) throws Exception {
-        // Try to find file with common extensions
         String[] possiblePaths = {
                 fileId + ".pdf",
                 fileId + ".docx",
@@ -68,7 +66,6 @@ public class MinioFileStorage implements FileStorage {
                                 .object(path)
                                 .build());
             } catch (Exception e) {
-                // Try next path
                 continue;
             }
         }
@@ -95,7 +92,6 @@ public class MinioFileStorage implements FileStorage {
                                 .build());
                 deleted = true;
             } catch (Exception e) {
-                // Continue to try other paths
             }
         }
 
@@ -120,7 +116,6 @@ public class MinioFileStorage implements FileStorage {
                                 .build());
                 return true;
             } catch (Exception e) {
-                // Try next path
                 continue;
             }
         }
@@ -135,3 +130,5 @@ public class MinioFileStorage implements FileStorage {
         return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
     }
 }
+
+
