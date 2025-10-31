@@ -19,7 +19,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -71,6 +71,6 @@ springdoc:
 
 logging:
   level:
-    com.aicoach: DEBUG
-    org.springframework.web: DEBUG
-    org.hibernate.SQL: DEBUG
+    com.aicoach: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: OFF

@@ -1,4 +1,4 @@
-package com.aicoach.repository.fileextraction;
+package com.aicoach.infrastructure.fileextraction;
 
 import java.io.File;
 import java.io.InputStream;
@@ -8,12 +8,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Component;
 
-import com.aicoach.repository.FileExtractor;
+import com.aicoach.infrastructure.FileExtractor;
 
-/**
- * Infrastructure Implementation - PDF Text Extractor
- * Uses Apache PDFBox to extract text from PDF files
- */
 @Component
 public class PdfExtractor implements FileExtractor {
 
@@ -40,22 +36,15 @@ public class PdfExtractor implements FileExtractor {
         return lowerCase.endsWith(".pdf");
     }
 
-    /**
-     * Extract text from PDDocument
-     */
     private String extractTextFromDocument(PDDocument document) throws Exception {
         if (document.getNumberOfPages() == 0) {
             return "";
         }
-
         PDFTextStripper stripper = new PDFTextStripper();
         stripper.setSortByPosition(true);
-        
-        // Extract text from all pages
         String text = stripper.getText(document);
-        
-        // Clean up extra whitespace
         return text.replaceAll("\\s+", " ").trim();
     }
 }
+
 

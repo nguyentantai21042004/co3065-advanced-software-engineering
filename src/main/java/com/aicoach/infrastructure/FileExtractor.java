@@ -1,4 +1,4 @@
-package com.aicoach.repository;
+package com.aicoach.infrastructure;
 
 import java.io.File;
 import java.io.InputStream;

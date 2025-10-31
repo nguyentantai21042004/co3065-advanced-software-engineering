@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.aicoach.repository.fileextraction.PdfExtractor;
+import com.aicoach.infrastructure.fileextraction.PdfExtractor;
 
 /**
  * Unit Tests for PdfExtractor

@@ -13,8 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.aicoach.infrastructure.FileExtractor;
+import com.aicoach.infrastructure.ImageExtractor;
 import com.aicoach.models.FileExtraction;
-import com.aicoach.repository.FileExtractor;
 
 /**
  * Unit Tests for FileExtractionService
@@ -29,10 +30,13 @@ class FileExtractionServiceTest {
     @Mock
     private FileExtractor docxExtractor;
 
+    @Mock
+    private ImageExtractor pdfImageExtractor;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        service = new FileExtractionService(Arrays.asList(pdfExtractor, docxExtractor));
+        service = new FileExtractionService(Arrays.asList(pdfExtractor, docxExtractor), Arrays.asList(pdfImageExtractor));
     }
 
     @Test

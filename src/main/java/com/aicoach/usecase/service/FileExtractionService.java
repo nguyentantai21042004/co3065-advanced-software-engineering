@@ -7,14 +7,15 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.aicoach.infrastructure.FileExtractor;
+import com.aicoach.infrastructure.ImageExtractor;
 import com.aicoach.models.FileExtraction;
-import com.aicoach.repository.FileExtractor;
 import com.aicoach.usecase.FileExtractionUseCase;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * File Extraction Service Implementation
- * Orchestrates text extraction from various file types
+ * Orchestrates text and image extraction from various file types
  */
 @Service
 @Transactional
@@ -22,128 +23,180 @@ import lombok.extern.slf4j.Slf4j;
 public class FileExtractionService implements FileExtractionUseCase {
 
     private final List<FileExtractor> extractors;
+    private final List<ImageExtractor> imageExtractors;
 
-    public FileExtractionService(List<FileExtractor> extractors) {
+    public FileExtractionService(List<FileExtractor> extractors, List<ImageExtractor> imageExtractors) {
         this.extractors = extractors;
+        this.imageExtractors = imageExtractors;
     }
 
     @Override
     public FileExtraction extractText(File file, String fileName) {
-        // Validate input
+        log.info("extractText(File, fileName) called. fileName: {}", fileName);
         if (file == null || !file.exists()) {
+            log.error(" File does not exist: {}", fileName);
             return FileExtraction.failed(fileName, getFileType(fileName), "File does not exist");
         }
 
         if (fileName == null || fileName.trim().isEmpty()) {
+            log.error(" File name is NULL or EMPTY");
             return FileExtraction.failed(fileName, getFileType(fileName), "File name is required");
         }
 
-        // Find appropriate extractor
         FileExtractor extractor = findExtractor(fileName);
         if (extractor == null) {
-            return FileExtraction.failed(fileName, getFileType(fileName), 
-                "Unsupported file type. Supported types: PDF, DOCX, DOC");
+            log.error(" No extractor found for fileName: {}. Supported types: PDF, DOCX, DOC", fileName);
+            return FileExtraction.failed(fileName, getFileType(fileName), "Unsupported file type. Supported types: PDF, DOCX, DOC");
         }
 
-        // Extract text
         try {
+            log.info("Using extractor: {}", extractor.getClass().getSimpleName());
             String extractedText = extractor.extractText(file);
-            
-            // Validate extracted text
+
             if (extractedText == null || extractedText.trim().isEmpty()) {
-                return FileExtraction.failed(fileName, getFileType(fileName), 
-                    "No text content found in file");
+                log.warn("No text content found in file: {}", fileName);
+                return FileExtraction.failed(fileName, getFileType(fileName), "No text content found in file");
             }
 
+            log.info("Extraction successful, text length: {}", extractedText.length());
             return new FileExtraction(fileName, getFileType(fileName), extractedText);
-            
+
         } catch (Exception e) {
-            return FileExtraction.failed(fileName, getFileType(fileName), 
-                "Failed to extract text: " + e.getMessage());
+            log.error(" Failed to extract text: {}", e.getMessage(), e);
+            return FileExtraction.failed(fileName, getFileType(fileName), "Failed to extract text: " + e.getMessage());
         }
     }
 
     @Override
     public FileExtraction extractText(InputStream inputStream, String fileName) {
-        log.info("[FileExtractionService] extractText called with fileName: {}", fileName);
-        
-        // Validate input
+        log.info("extractText(InputStream, fileName) called with fileName: {}", fileName);
+
         if (inputStream == null) {
-            log.error("[FileExtractionService] ❌ Input stream is NULL!");
+            log.error(" Input stream is NULL!");
             return FileExtraction.failed(fileName, getFileType(fileName), "Input stream is null");
         }
-        log.info("[FileExtractionService] InputStream is valid");
 
         if (fileName == null || fileName.trim().isEmpty()) {
-            log.error("[FileExtractionService] ❌ fileName is NULL or EMPTY!");
+            log.error(" fileName is NULL or EMPTY!");
             return FileExtraction.failed(fileName, getFileType(fileName), "File name is required");
         }
-        log.info("[FileExtractionService] fileName is valid: {}", fileName);
 
-        // Find appropriate extractor
         FileExtractor extractor = findExtractor(fileName);
         if (extractor == null) {
-            log.error("[FileExtractionService] ❌ No extractor found for fileName: {}", fileName);
-            log.error("[FileExtractionService] Available extractors count: {}", extractors.size());
-            return FileExtraction.failed(fileName, getFileType(fileName), 
-                "Unsupported file type. Supported types: PDF, DOCX, DOC");
+            log.error(" No extractor found for fileName: {}. Supported types: PDF, DOCX, DOC", fileName);
+            log.error("Available extractors count: {}", extractors.size());
+            return FileExtraction.failed(fileName, getFileType(fileName), "Unsupported file type. Supported types: PDF, DOCX, DOC");
         }
-        log.info("[FileExtractionService] ✅ Found extractor: {}", extractor.getClass().getSimpleName());
+        log.info("Found extractor: {}", extractor.getClass().getSimpleName());
 
-        // Extract text
         try {
-            log.info("[FileExtractionService] Calling extractor.extractText()...");
+            log.info("Calling extractor.extractText()...");
             String extractedText = extractor.extractText(inputStream, fileName);
-            log.info("[FileExtractionService] Extractor returned text, length: {}", 
-                extractedText != null ? extractedText.length() : "NULL");
-            
-            // Validate extracted text
+            log.info("Extractor returned text, length: {}", extractedText != null ? extractedText.length() : "NULL");
+
             if (extractedText == null || extractedText.trim().isEmpty()) {
-                log.warn("[FileExtractionService] ⚠️ Extracted text is NULL or EMPTY!");
-                return FileExtraction.failed(fileName, getFileType(fileName), 
-                    "No text content found in file");
+                log.warn("Extracted text is NULL or EMPTY!");
+                return FileExtraction.failed(fileName, getFileType(fileName), "No text content found in file");
             }
 
-            log.info("[FileExtractionService] ✅ Extraction successful, text length: {}", extractedText.length());
+            log.info("Extraction successful, text length: {}", extractedText.length());
             return new FileExtraction(fileName, getFileType(fileName), extractedText);
-            
+
         } catch (Exception e) {
-            log.error("[FileExtractionService] ❌ Exception during extraction: {}", e.getMessage(), e);
-            return FileExtraction.failed(fileName, getFileType(fileName), 
-                "Failed to extract text: " + e.getMessage());
+            log.error(" Exception during extraction: {}", e.getMessage(), e);
+            return FileExtraction.failed(fileName, getFileType(fileName), "Failed to extract text: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public byte[] extractFirstImage(InputStream inputStream, String fileName) {
+        log.info("extractFirstImage called for fileName: {}", fileName);
+
+        if (inputStream == null) {
+            log.error(" Input stream is null");
+            return null;
+        }
+
+        if (fileName == null || fileName.trim().isEmpty()) {
+            log.error(" File name is required");
+            return null;
+        }
+
+        ImageExtractor imageExtractor = findImageExtractor(fileName);
+        if (imageExtractor == null) {
+            log.warn("No image extractor found for file type: {}", fileName);
+            return null;
+        }
+
+        try {
+            log.info("Using image extractor: {}", imageExtractor.getClass().getSimpleName());
+            byte[] imageData = imageExtractor.extractFirstImage(inputStream, fileName);
+
+            if (imageData == null || imageData.length == 0) {
+                log.warn("No images found in file: {}", fileName);
+                return null;
+            }
+
+            log.info("Successfully extracted image, size: {} bytes", imageData.length);
+            return imageData;
+
+        } catch (Exception e) {
+            log.error("Failed to extract image from file: {}, exception: {}", fileName, e.getMessage(), e);
+            return null;
         }
     }
 
     @Override
     public boolean isSupportedFileType(String fileName) {
-        return findExtractor(fileName) != null;
+        boolean supported = findExtractor(fileName) != null;
+        log.debug("isSupportedFileType('{}'): {}", fileName, supported);
+        return supported;
     }
 
-    /**
-     * Find appropriate extractor for the file
-     */
+    @Override
+    public boolean supportsImageExtraction(String fileName) {
+        boolean supported = findImageExtractor(fileName) != null;
+        log.debug("supportsImageExtraction('{}'): {}", fileName, supported);
+        return supported;
+    }
+
     private FileExtractor findExtractor(String fileName) {
         if (fileName == null) {
+            log.warn("findExtractor called with null fileName");
             return null;
         }
-
         for (FileExtractor extractor : extractors) {
             if (extractor.supports(fileName)) {
+                log.debug("findExtractor matched: {}", extractor.getClass().getSimpleName());
                 return extractor;
             }
         }
-
+        log.warn("No FileExtractor matches fileName: {}", fileName);
         return null;
     }
 
-    /**
-     * Get file type from file name
-     */
+    private ImageExtractor findImageExtractor(String fileName) {
+        if (fileName == null) {
+            log.warn("findImageExtractor called with null fileName");
+            return null;
+        }
+        for (ImageExtractor extractor : imageExtractors) {
+            if (extractor.supports(fileName)) {
+                log.debug("findImageExtractor matched: {}", extractor.getClass().getSimpleName());
+                return extractor;
+            }
+        }
+        log.warn("No ImageExtractor matches fileName: {}", fileName);
+        return null;
+    }
+
     private String getFileType(String fileName) {
         if (fileName == null || !fileName.contains(".")) {
+            log.debug("getFileType: UNKNOWN for fileName: {}", fileName);
             return "UNKNOWN";
         }
-        return fileName.substring(fileName.lastIndexOf(".") + 1).toUpperCase();
+        String type = fileName.substring(fileName.lastIndexOf(".") + 1).toUpperCase();
+        log.debug("getFileType: {} for fileName: {}", type, fileName);
+        return type;
     }
 }
-

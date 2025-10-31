@@ -8,12 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Message Model for CV Extraction Queue
- * 
- * This message is sent from API service to Consumer service
- * via RabbitMQ for asynchronous CV text extraction.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
