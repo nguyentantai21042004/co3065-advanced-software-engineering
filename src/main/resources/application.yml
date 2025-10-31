@@ -58,12 +58,11 @@ minio:
 # Google Gemini API Configuration
 gemini:
   api-keys: ${GEMINI_API_KEYS:}
-  # Example: api-keys: key1,key2,key3
-  endpoint: ${GEMINI_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
-  default-model: ${GEMINI_MODEL:gemini-pro}
+  endpoint: ${GEMINI_ENDPOINT:https://generativelanguage.googleapis.com/v1/models}
+  default-model: ${GEMINI_MODEL:gemini-2.5-flash}
   default-temperature: ${GEMINI_TEMPERATURE:0.7}
-  default-max-tokens: ${GEMINI_MAX_TOKENS:2048}
-  timeout-ms: ${GEMINI_TIMEOUT_MS:30000}
+  default-max-tokens: ${GEMINI_MAX_TOKENS:4096}
+  timeout-ms: ${GEMINI_TIMEOUT_MS:90000}
   key-strategy: ${GEMINI_KEY_STRATEGY:ROUND_ROBIN} # ROUND_ROBIN, RANDOM, FAILOVER
   retry:
     max-retries: ${GEMINI_MAX_RETRIES:3}

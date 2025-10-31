@@ -38,6 +38,14 @@ public class RabbitMQConfig {
     public static final String EXTRACTION_NOTIFY_EXCHANGE = "extraction.notify.exchange";
     public static final String EXTRACTION_NOTIFY_ROUTING_KEY = "extraction.notify";
 
+    // CV Analysis queue
+    public static final String CV_ANALYSIS_QUEUE = "cv.analysis.queue";
+    public static final String CV_ANALYSIS_DLQ = "cv.analysis.dlq";
+    public static final String CV_ANALYSIS_EXCHANGE = "cv.analysis.exchange";
+    public static final String CV_ANALYSIS_DLX = "cv.analysis.dlx";
+    public static final String CV_ANALYSIS_ROUTING_KEY = "cv.analysis";
+    public static final String CV_ANALYSIS_DLQ_ROUTING_KEY = "cv.analysis.dlq";
+
     /**
      * Main Exchange for CV processing
      */
@@ -109,6 +117,62 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(extractionNotifyQueue)
                 .to(extractionNotifyExchange)
                 .with(EXTRACTION_NOTIFY_ROUTING_KEY);
+    }
+
+    /**
+     * CV Analysis Exchange
+     */
+    @Bean
+    public DirectExchange cvAnalysisExchange() {
+        return new DirectExchange(CV_ANALYSIS_EXCHANGE, true, false);
+    }
+
+    /**
+     * CV Analysis Dead Letter Exchange
+     */
+    @Bean
+    public DirectExchange cvAnalysisDeadLetterExchange() {
+        return new DirectExchange(CV_ANALYSIS_DLX, true, false);
+    }
+
+    /**
+     * CV Analysis Queue with DLQ configuration
+     */
+    @Bean
+    public Queue cvAnalysisQueue() {
+        return QueueBuilder.durable(CV_ANALYSIS_QUEUE)
+                .withArgument("x-dead-letter-exchange", CV_ANALYSIS_DLX)
+                .withArgument("x-dead-letter-routing-key", CV_ANALYSIS_DLQ_ROUTING_KEY)
+                .withArgument("x-message-ttl", 600000) // 10 minutes TTL
+                .build();
+    }
+
+    /**
+     * CV Analysis Dead Letter Queue
+     */
+    @Bean
+    public Queue cvAnalysisDeadLetterQueue() {
+        return QueueBuilder.durable(CV_ANALYSIS_DLQ).build();
+    }
+
+    /**
+     * Binding: CV Analysis Queue → CV Analysis Exchange
+     */
+    @Bean
+    public Binding cvAnalysisBinding(Queue cvAnalysisQueue, DirectExchange cvAnalysisExchange) {
+        return BindingBuilder.bind(cvAnalysisQueue)
+                .to(cvAnalysisExchange)
+                .with(CV_ANALYSIS_ROUTING_KEY);
+    }
+
+    /**
+     * Binding: CV Analysis DLQ → CV Analysis DLX
+     */
+    @Bean
+    public Binding cvAnalysisDlqBinding(Queue cvAnalysisDeadLetterQueue, DirectExchange cvAnalysisDeadLetterExchange) {
+        return BindingBuilder.bind(cvAnalysisDeadLetterQueue)
+                .to(cvAnalysisDeadLetterExchange)
+                .with(CV_ANALYSIS_DLQ_ROUTING_KEY);
     }
 
     /**

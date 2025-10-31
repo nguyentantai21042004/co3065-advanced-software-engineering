@@ -48,13 +48,21 @@ public class GeminiConfig {
 
     /**
      * Gemini API endpoint
+     * Recommended: v1 (supports latest models)
+     * Legacy: v1beta (may not support newer models)
      */
-    private String endpoint = "https://generativelanguage.googleapis.com/v1beta/models";
+    private String endpoint = "https://generativelanguage.googleapis.com/v1/models";
 
     /**
      * Default model to use
+     * Recommended options:
+     * - gemini-2.5-flash: Fast and cost-effective (default)
+     * - gemini-2.5-pro: More powerful, better for complex tasks
+     * - gemini-1.5-flash: Alternative fast model
+     * - gemini-1.5-pro: Alternative powerful model
+     * Legacy: gemini-2.5-flash (deprecated, may not work on v1beta)
      */
-    private String defaultModel = "gemini-pro";
+    private String defaultModel = "gemini-2.5-flash";
 
     /**
      * Default temperature (0.0 - 1.0)

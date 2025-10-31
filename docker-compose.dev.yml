@@ -44,8 +44,8 @@ services:
 
       # Gemini AI Integration (see application.yml lines 59-71)
       - GEMINI_API_KEYS=${GEMINI_API_KEYS}
-      - GEMINI_ENDPOINT=${GEMINI_ENDPOINT:-https://generativelanguage.googleapis.com/v1beta/models}
-      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-pro}
+      - GEMINI_ENDPOINT=${GEMINI_ENDPOINT:-https://generativelanguage.googleapis.com/v1/models}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
       - GEMINI_TEMPERATURE=${GEMINI_TEMPERATURE:-0.7}
       - GEMINI_MAX_TOKENS=${GEMINI_MAX_TOKENS:-2048}
       - GEMINI_TIMEOUT_MS=${GEMINI_TIMEOUT_MS:-30000}
