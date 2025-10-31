@@ -24,11 +24,14 @@ public class MinioFileStorage implements FileStorage {
 
     private final MinioClient minioClient;
     private final String bucketName;
+    private final String avatarBucketName;
 
     public MinioFileStorage(MinioClient minioClient,
-            @Value("${minio.bucket-name}") String bucketName) {
+            @Value("${minio.bucket-name}") String bucketName,
+            @Value("${minio.avatar-bucket-name:cv-avatars}") String avatarBucketName) {
         this.minioClient = minioClient;
         this.bucketName = bucketName;
+        this.avatarBucketName = avatarBucketName;
     }
 
     @Override
@@ -38,9 +41,14 @@ public class MinioFileStorage implements FileStorage {
         String fileExtension = getFileExtension(fileName);
         String storagePath = fileId + (fileExtension.isEmpty() ? "" : "." + fileExtension);
 
+        // Route avatars to a dedicated bucket
+        String targetBucket = (fileName != null && fileName.startsWith("avatar-"))
+                ? avatarBucketName
+                : bucketName;
+
         minioClient.putObject(
                 PutObjectArgs.builder()
-                        .bucket(bucketName)
+                        .bucket(targetBucket)
                         .object(storagePath)
                         .stream(inputStream, fileSize, -1)
                         .contentType(contentType)
@@ -66,7 +74,15 @@ public class MinioFileStorage implements FileStorage {
                                 .object(path)
                                 .build());
             } catch (Exception e) {
-                continue;
+                // Try avatar bucket as fallback
+                try {
+                    return minioClient.getObject(
+                            GetObjectArgs.builder()
+                                    .bucket(avatarBucketName)
+                                    .object(path)
+                                    .build());
+                } catch (Exception ignored) {
+                }
             }
         }
 
@@ -92,6 +108,15 @@ public class MinioFileStorage implements FileStorage {
                                 .build());
                 deleted = true;
             } catch (Exception e) {
+                // Try avatar bucket
+                try {
+                    minioClient.removeObject(
+                            RemoveObjectArgs.builder()
+                                    .bucket(avatarBucketName)
+                                    .object(path)
+                                    .build());
+                    deleted = true;
+                } catch (Exception ignored) {}
             }
         }
 
@@ -116,7 +141,15 @@ public class MinioFileStorage implements FileStorage {
                                 .build());
                 return true;
             } catch (Exception e) {
-                continue;
+                // Try avatar bucket
+                try {
+                    minioClient.statObject(
+                            StatObjectArgs.builder()
+                                    .bucket(avatarBucketName)
+                                    .object(path)
+                                    .build());
+                    return true;
+                } catch (Exception ignored) {}
             }
         }
 
