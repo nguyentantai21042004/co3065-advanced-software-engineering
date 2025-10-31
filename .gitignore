@@ -26,6 +26,7 @@ out/
 *.jar
 *.war
 *.ear
+.env
 
 .vscode
 .claude

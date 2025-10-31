@@ -53,6 +53,22 @@ minio:
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
   secret-key: ${MINIO_SECRET_KEY:minioadmin}
   bucket-name: ${MINIO_BUCKET_NAME:cv-files}
+  avatar-bucket-name: ${MINIO_AVATAR_BUCKET_NAME:cv-avatars}
+
+# Google Gemini API Configuration
+gemini:
+  api-keys: ${GEMINI_API_KEYS:}
+  # Example: api-keys: key1,key2,key3
+  endpoint: ${GEMINI_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
+  default-model: ${GEMINI_MODEL:gemini-pro}
+  default-temperature: ${GEMINI_TEMPERATURE:0.7}
+  default-max-tokens: ${GEMINI_MAX_TOKENS:2048}
+  timeout-ms: ${GEMINI_TIMEOUT_MS:30000}
+  key-strategy: ${GEMINI_KEY_STRATEGY:ROUND_ROBIN} # ROUND_ROBIN, RANDOM, FAILOVER
+  retry:
+    max-retries: ${GEMINI_MAX_RETRIES:3}
+    initial-delay-ms: ${GEMINI_RETRY_DELAY_MS:1000}
+    max-delay-ms: ${GEMINI_MAX_RETRY_DELAY_MS:10000}
 
 # OpenAPI/Swagger Configuration
 springdoc:
