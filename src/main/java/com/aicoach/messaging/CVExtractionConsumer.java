@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.aicoach.config.RabbitMQConfig;
+import com.aicoach.models.CVAnalysisMessage;
 import com.aicoach.models.CVExtractionMessage;
 import com.aicoach.models.ExtractionNotifyMessage;
 import com.aicoach.repository.postgresql.ExtractionResultRepository;
@@ -27,6 +28,7 @@ public class CVExtractionConsumer {
     private final CVExtractionUseCase cvExtractionUseCase;
     private final ExtractionResultRepository extractionResultRepository;
     private final ExtractionNotifyProducer extractionNotifyProducer;
+    private final CVAnalysisProducer cvAnalysisProducer;
 
     /**
      * Listen to CV extraction queue and process messages
@@ -64,7 +66,19 @@ public class CVExtractionConsumer {
             ExtractionResultEntity saved = extractionResultRepository.save(entity);
             log.info("Extraction result saved for file: {}", message.getFileId());
 
-            // Step 3: Send notification
+            // Step 3: Publish CV analysis task
+            log.info("Publishing CV analysis task");
+            CVAnalysisMessage analysisMessage = CVAnalysisMessage.builder()
+                    .taskId(UUID.randomUUID().toString())
+                    .extractionResultId(saved.getId().toString())
+                    .fileId(message.getFileId())
+                    .fileName(message.getFileName())
+                    .build();
+            cvAnalysisProducer.sendAnalysisTask(analysisMessage);
+            log.info("CV analysis task published: taskId={}, extractionResultId={}",
+                    analysisMessage.getTaskId(), analysisMessage.getExtractionResultId());
+
+            // Step 4: Send extraction notification
             log.info("Sending extraction notification");
             extractionNotifyProducer.sendNotify(
                     new ExtractionNotifyMessage(saved.getId().toString()));
