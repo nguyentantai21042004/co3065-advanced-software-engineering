@@ -20,17 +20,30 @@ import type {
 class AuthService {
   // Login
   async login(data: LoginRequest): Promise<LoginResponse> {
-    const response = await http.post<LoginResponse>("/auth/login", data);
+    const response = await http.post<LoginResponse>("/users/login", data);
 
-    // Lưu tokens và user vào localStorage
-    if (response.data.accessToken) {
-      localStorage.setItem("accessToken", response.data.accessToken);
+    console.log("Login response:", response.data);
+
+    // Lưu token và email vào localStorage VÀ cookies
+    if (response.data.data.token) {
+      const token = response.data.data.token;
+      localStorage.setItem("accessToken", token);
+
+      // Lưu vào cookie để middleware có thể check
+      document.cookie = `accessToken=${token}; path=/; max-age=${
+        60 * 60 * 24 * 7
+      }`; // 7 days
+
+      console.log("Token saved:", token);
     }
-    if (response.data.refreshToken) {
-      localStorage.setItem("refreshToken", response.data.refreshToken);
-    }
-    if (response.data.user) {
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+    if (response.data.data.email) {
+      // Tạo user object từ email
+      const user: User = {
+        id: "", // Backend chưa trả về
+        email: response.data.data.email,
+      };
+      localStorage.setItem("user", JSON.stringify(user));
+      console.log("User saved:", user);
     }
 
     return response.data;
@@ -38,7 +51,7 @@ class AuthService {
 
   // Register
   async register(data: RegisterRequest): Promise<RegisterResponse> {
-    const response = await http.post<RegisterResponse>("/auth/register", data);
+    const response = await http.post<RegisterResponse>("/users/register", data);
     return response.data;
   }
 
@@ -49,10 +62,13 @@ class AuthService {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Clear localStorage
+      // Clear localStorage và cookies
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
+
+      // Xóa cookie
+      document.cookie = "accessToken=; path=/; max-age=0";
     }
   }
 

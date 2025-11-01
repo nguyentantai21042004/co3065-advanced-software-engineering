@@ -76,19 +76,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setState((prev) => ({ ...prev, isLoading: true }));
 
       try {
-        const response = await authService.login(data);
+        console.log("Starting login...");
+        await authService.login(data);
+
+        // Lấy token và user từ localStorage (đã được lưu trong authService.login)
+        const accessToken = authService.getAccessToken();
+        const user = authService.getStoredUser();
+
+        console.log("Access token:", accessToken);
+        console.log("User:", user);
 
         setState({
-          user: response.user,
-          accessToken: response.accessToken,
-          refreshToken: response.refreshToken,
+          user,
+          accessToken,
+          refreshToken: null, // Backend không trả refreshToken
           isAuthenticated: true,
           isLoading: false,
         });
 
+        console.log("Redirecting to dashboard...");
         // Redirect to dashboard
         router.push("/dashboard/upload");
       } catch (error) {
+        console.error("Login error:", error);
         setState((prev) => ({ ...prev, isLoading: false }));
         throw error;
       }
