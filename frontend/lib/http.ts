@@ -17,9 +17,20 @@ const http: AxiosInstance = axios.create({
 // Request interceptor - Thêm token vào headers
 http.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem("accessToken");
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Bỏ qua việc thêm token cho các endpoint không cần auth
+    const skipAuthUrls = [
+      "/users/login",
+      "/users/register",
+      "/auth/forgot-password",
+      "/auth/reset-password",
+    ];
+    const isSkipAuth = skipAuthUrls.some((url) => config.url?.includes(url));
+
+    if (!isSkipAuth) {
+      const token = localStorage.getItem("accessToken");
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },

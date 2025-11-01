@@ -16,10 +16,12 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
-  message?: string;
+  error_code: number;
+  message: string;
+  data: {
+    email: string;
+    token: string;
+  };
 }
 
 export interface RegisterRequest {

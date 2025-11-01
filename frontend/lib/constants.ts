@@ -1,6 +1,6 @@
 // API Configuration
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+  process.env.NEXT_PUBLIC_API_URL || "http://10.28.128.87:8090/api";
 
 // App Configuration
 export const APP_NAME = "AI Coach";
@@ -10,8 +10,8 @@ export const APP_DESCRIPTION = "CV Processing System";
 export const ROUTES = {
   // Auth routes
   AUTH: {
-    LOGIN: "/auth/login",
-    REGISTER: "/auth/register",
+    LOGIN: "/users/login",
+    REGISTER: "/users/register",
     FORGOT_PASSWORD: "/auth/forgot-password",
   },
   // Dashboard routes
