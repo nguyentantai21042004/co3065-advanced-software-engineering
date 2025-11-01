@@ -80,7 +80,7 @@ export default function UploadPage() {
             formData.append('file', file)
 
             const response = await axios.post(
-                'http://localhost:8090/api/cv/upload',
+                'http://10.28.128.87:8090/api/cv/upload',
                 formData,
                 {
                     headers: {
@@ -122,7 +122,7 @@ export default function UploadPage() {
             if (fileId) {
                 console.log('Calling extract API for file:', fileId)
                 const extractResponse = await axios.post(
-                    `http://localhost:8090/api/cv/extract/${fileId}`,
+                    `http://10.28.128.87:8090/api/cv/extract/${fileId}`,
                     {},
                     {
                         headers: { Accept: '*/*' },
