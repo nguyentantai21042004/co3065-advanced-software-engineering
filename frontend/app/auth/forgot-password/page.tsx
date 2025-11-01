@@ -1,44 +1,57 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Mail, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail, AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
+import { authService } from "@/lib/auth.service";
+import { handleApiError } from "@/lib/api-error.handler";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     // Validation
     if (!email) {
-      setError("Please enter your email address")
-      setIsLoading(false)
-      return
+      setError("Please enter your email address");
+      setIsLoading(false);
+      return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address")
-      setIsLoading(false)
-      return
+      setError("Please enter a valid email address");
+      setIsLoading(false);
+      return;
     }
 
-    // Mock API call
-    setTimeout(() => {
-      setSubmitted(true)
-    }, 800)
-  }
+    try {
+      // Gọi API forgot password
+      await authService.forgotPassword({ email });
+      setSubmitted(true);
+    } catch (err) {
+      setError(handleApiError(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (submitted) {
     return (
@@ -48,11 +61,16 @@ export default function ForgotPasswordPage() {
             <div className="flex justify-center mb-4">
               <CheckCircle2 className="h-16 w-16 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h2>
-            <p className="text-gray-600 mb-1">We've sent password reset instructions to:</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Check Your Email
+            </h2>
+            <p className="text-gray-600 mb-1">
+              We've sent password reset instructions to:
+            </p>
             <p className="text-gray-900 font-medium mb-6">{email}</p>
             <p className="text-sm text-gray-500 mb-8">
-              If you don't see the email within a few minutes, check your spam folder.
+              If you don't see the email within a few minutes, check your spam
+              folder.
             </p>
             <Link href="/auth/login">
               <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg">
@@ -62,7 +80,7 @@ export default function ForgotPasswordPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -74,7 +92,9 @@ export default function ForgotPasswordPage() {
               AI
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">Reset Password</CardTitle>
+          <CardTitle className="text-2xl font-bold text-gray-900">
+            Reset Password
+          </CardTitle>
           <CardDescription className="text-gray-600">
             Enter your email to receive password reset instructions
           </CardDescription>
@@ -84,17 +104,25 @@ export default function ForgotPasswordPage() {
           {error && (
             <Alert className="mb-4 bg-red-50 border-red-200">
               <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-700">{error}</AlertDescription>
+              <AlertDescription className="text-red-700">
+                {error}
+              </AlertDescription>
             </Alert>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Field */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Email Address</label>
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-700"
+              >
+                Email Address
+              </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
+                  id="email"
                   type="email"
                   placeholder="you@example.com"
                   value={email}
@@ -125,5 +153,5 @@ export default function ForgotPasswordPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
