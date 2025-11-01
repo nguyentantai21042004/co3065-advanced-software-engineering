@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   frontend:
     build:
-      context: ./frontend
+      context: .
       dockerfile: Dockerfile
     container_name: frontend-app
     ports:
@@ -12,6 +10,15 @@ services:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
     restart: unless-stopped
+    # IMPORTANT: Build the app first before starting:
+    #   cd frontend
+    #   pnpm install && pnpm build
+    #   (or: npm install && npm run build)
+    #
+    # These volumes mount the build output into the container:
+    volumes:
+      - ./.next/standalone:/app
+      - ./.next/static:/app/.next/static
     # Container stays running - exec into it to start the app:
     # docker-compose exec frontend node server.js
 
