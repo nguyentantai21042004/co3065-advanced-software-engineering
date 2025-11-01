@@ -1,17 +1,18 @@
-version: '3.8'
-
 services:
   frontend:
     build:
-      context: ./frontend
+      context: .
       dockerfile: Dockerfile
     container_name: frontend-app
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=${NODE_ENV:-development}
       - NEXT_TELEMETRY_DISABLED=1
     restart: unless-stopped
-    # Container stays running - exec into it to start the app:
-    # docker-compose exec frontend node server.js
+
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
 
