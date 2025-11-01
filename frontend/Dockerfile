@@ -12,16 +12,7 @@ ENV WATCHPACK_POLLING=true
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy package.json and pnpm-lock.yaml before installing dependencies
-COPY package.json pnpm-lock.yaml* ./
-
-# Install dependencies using pnpm (development mode, allow lockfile updates)
-RUN pnpm install
-
-# Copy the rest of the application files
-COPY . .
-
-# Set proper permissions for the app directory
+# Set proper permissions for the app directory (will be set up when volume mounts)
 RUN chown -R nextjs:nodejs /app
 
 USER nextjs
@@ -31,5 +22,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Run the development server with hot reload
-CMD ["pnpm", "dev"]
+# Install dependencies if needed and start dev server
+CMD sh -c "if [ ! -d 'node_modules' ] || [ ! -f 'node_modules/.pnpm/lock.yaml' ]; then echo 'Installing dependencies...' && pnpm install --no-frozen-lockfile; fi && echo 'Starting Next.js dev server...' && pnpm dev"
