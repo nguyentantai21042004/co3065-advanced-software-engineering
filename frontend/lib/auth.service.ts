@@ -57,19 +57,16 @@ class AuthService {
 
   // Logout
   async logout(): Promise<void> {
-    try {
-      await http.post("/auth/logout");
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      // Clear localStorage và cookies
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
+    // Không cần gọi API logout vì backend không có endpoint này
+    // Chỉ cần xóa token ở client-side là đủ
 
-      // Xóa cookie
-      document.cookie = "accessToken=; path=/; max-age=0";
-    }
+    // Clear localStorage và cookies
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+
+    // Xóa cookie
+    document.cookie = "accessToken=; path=/; max-age=0";
   }
 
   // Forgot Password

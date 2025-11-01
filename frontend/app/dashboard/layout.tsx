@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { LogOut, Home, History, Settings } from "lucide-react"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { LogOut, Home, History, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,37 +14,37 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/auth.context";
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const router = useRouter()
-  const [user, setUser] = useState<{ email: string; name: string } | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter();
+  const { user, logout, isLoading: authLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // const userStr = localStorage.getItem("user")
-    // if (!userStr) {
-    //   router.push("/auth/login")
-    //   return
-    // }
-    // setUser(JSON.parse(userStr))
+    // Kiểm tra nếu chưa login thì redirect
+    if (!authLoading && !user) {
+      router.push("/auth/login");
+      return;
+    }
+    setIsLoading(false);
+  }, [router, user, authLoading]);
 
-    // Temporary: Set dummy user for testing all pages
-    setUser({ email: "test@example.com", name: "Test User" })
-    setIsLoading(false)
-  }, [router])
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
-  const handleLogout = () => {
-    localStorage.removeItem("user")
-    router.push("/auth/login")
-  }
-
-  if (isLoading) return null
+  if (isLoading) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -90,10 +90,12 @@ export default function DashboardLayout({
               <Button variant="ghost" className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-blue-600 text-white font-semibold">
-                    {user?.name?.[0]?.toUpperCase()}
+                    {user?.email?.[0]?.toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium text-gray-700 hidden sm:inline">{user?.name}</span>
+                <span className="text-sm font-medium text-gray-700 hidden sm:inline">
+                  {user?.email?.split("@")[0] || "User"}
+                </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -118,7 +120,9 @@ export default function DashboardLayout({
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
+      </main>
     </div>
-  )
+  );
 }
