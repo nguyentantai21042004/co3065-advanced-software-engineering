@@ -11,11 +11,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy pre-built Next.js standalone output from host
-# Build first on host: cd frontend && pnpm install && pnpm build
-COPY --chown=nextjs:nodejs .next/standalone ./
-COPY --chown=nextjs:nodejs .next/static ./.next/static
-COPY --chown=nextjs:nodejs public ./public
+# Create directory structure - files will be mounted via volumes in docker-compose
+RUN mkdir -p .next/static public && chown -R nextjs:nodejs /app
+
+# Files are mounted via volumes in docker-compose.yml
+# Build the app first: pnpm install && pnpm build
 
 USER nextjs
 
