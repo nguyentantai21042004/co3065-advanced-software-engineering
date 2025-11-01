@@ -1,8 +1,11 @@
 package com.aicoach.usecase;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.aicoach.adapter.http.dto.LoginDto;
+import com.aicoach.adapter.http.dto.RegisterDto;
 import com.aicoach.models.User;
 import com.aicoach.usecase.service.UserService;
 import com.aicoach.usecase.types.UserTypes.RegisterRequest;
@@ -22,9 +25,20 @@ public class UserUseCase {
         return userService.register(new RegisterRequest(email, password));
     }
 
+    public User registerUser(RegisterDto registerDto) {
+        return userService.register(new RegisterRequest(registerDto.getEmail(), registerDto.getPassword()));
+    }
+
+    public String registerUserAndGenerateToken(RegisterDto registerDto) {
+        User user = registerUser(registerDto);
+        return userService.generateTokenForUser(user);
+    }
+
     public User authenticateUser(String email, String password) {
         return userService.authenticate(new LoginRequest(email, password));
     }
 
-    // Additional user-related methods can be added here
+    public ResponseEntity<?> login(LoginDto loginDto) {
+        return userService.login(loginDto);
+    }
 }

@@ -5,8 +5,8 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * CORS Configuration - Cho phép tất cả cross-origin requests
- * Development mode: Allow everything
+ * CORS Configuration - Allow all cross-origin requests
+ * Configured to allow all origins, methods, and headers
  */
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
@@ -14,9 +14,11 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOriginPatterns("*")
-                .allowedMethods("*")
-                .allowedHeaders("*")
-                .allowCredentials(true);
+                .allowedOriginPatterns("*")  // Allow all origins (using patterns supports credentials)
+                .allowedMethods("*")          // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+                .allowedHeaders("*")          // Allow all headers
+                .exposedHeaders("*")          // Expose all response headers to client
+                .allowCredentials(true)       // Allow credentials (cookies, authorization headers)
+                .maxAge(3600);                // Cache preflight requests for 1 hour
     }
 }

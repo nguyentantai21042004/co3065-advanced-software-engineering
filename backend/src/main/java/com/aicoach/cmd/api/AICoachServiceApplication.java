@@ -2,9 +2,9 @@ package com.aicoach.cmd.api;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 
 /**
  * AI Coach API Service - Main Entry Point
@@ -20,7 +20,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 @SpringBootApplication(scanBasePackages = "com.aicoach")
 @ComponentScan(basePackages = "com.aicoach")
 @EnableJpaRepositories(basePackages = "com.aicoach.repository.postgresql")
-@EntityScan(basePackages = { "com.aicoach.repository.postgresql.entity" })
+@EntityScan(basePackages = { "com.aicoach.repository.postgresql.entity", "com.aicoach.models" })
 public class AICoachServiceApplication {
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AICoachServiceApplication.class);
