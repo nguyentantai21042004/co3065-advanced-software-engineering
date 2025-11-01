@@ -14,7 +14,7 @@ import {
     CardTitle,
 } from '@/components/ui/card'
 import { Cloud, Upload, CheckCircle2, AlertCircle, X } from 'lucide-react'
-import axios from 'axios'
+import http from '@/lib/http'
 
 interface FileState {
     file: File | null
@@ -79,25 +79,21 @@ export default function UploadPage() {
             const formData = new FormData()
             formData.append('file', file)
 
-            const response = await axios.post(
-                'http://localhost:8090/api/cv/upload',
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        Accept: 'application/json',
-                    },
-                    onUploadProgress: (progressEvent) => {
-                        if (progressEvent.total) {
-                            const progress = Math.round(
-                                (progressEvent.loaded * 100) /
-                                    progressEvent.total,
-                            )
-                            setFileState((prev) => ({ ...prev, progress }))
-                        }
-                    },
+            const response = await http.post('/cv/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Accept: 'application/json',
                 },
-            )
+                onUploadProgress: (progressEvent) => {
+                    if (progressEvent.total) {
+                        const progress = Math.round(
+                            (progressEvent.loaded * 100) / progressEvent.total,
+                        )
+                        setFileState((prev) => ({ ...prev, progress }))
+                    }
+                },
+            })
+
             //lấy id
             const fileId = response.data?.data?.file_id
 
@@ -121,13 +117,7 @@ export default function UploadPage() {
             //cal api extract
             if (fileId) {
                 console.log('Calling extract API for file:', fileId)
-                const extractResponse = await axios.post(
-                    `http://localhost:8090/api/cv/extract/${fileId}`,
-                    {},
-                    {
-                        headers: { Accept: '*/*' },
-                    },
-                )
+                const extractResponse = await http.post(`/cv/extract/${fileId}`)
 
                 console.log('Extract result:', extractResponse.data)
 
