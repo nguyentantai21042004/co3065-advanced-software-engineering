@@ -7,10 +7,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
+      - NODE_ENV=development
       - NEXT_TELEMETRY_DISABLED=1
+      - WATCHPACK_POLLING=true
     restart: unless-stopped
-
+    # Mount volumes for hot reload - node_modules and .next are excluded to use container versions
     volumes:
       - .:/app
       - /app/node_modules

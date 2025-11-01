@@ -1,7 +1,7 @@
 # Dependencies and source files (not needed in runtime container)
 node_modules
 .pnpm-store
-pnpm-lock.yaml
+# pnpm-lock.yaml is needed for frozen-lockfile install
 *.ts
 *.tsx
 components
