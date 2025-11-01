@@ -17,7 +17,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
  *
  * NOTE: CVExtractionConsumer is controlled by @Profile("consumer") and will NOT run in API mode
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.aicoach")
 @ComponentScan(basePackages = "com.aicoach")
 @EnableJpaRepositories(basePackages = "com.aicoach.repository.postgresql")
 @EntityScan(basePackages = { "com.aicoach.repository.postgresql.entity" })
