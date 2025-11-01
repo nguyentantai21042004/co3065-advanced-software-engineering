@@ -1,48 +1,58 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Mail, Lock, AlertCircle } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail, Lock, AlertCircle } from "lucide-react";
+import { useAuth } from "@/contexts/auth.context";
+import { handleApiError } from "@/lib/api-error.handler";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const { login, isLoading: authLoading } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     // Basic validation
     if (!email || !password) {
-      setError("Please fill in all fields")
-      setIsLoading(false)
-      return
+      setError("Please fill in all fields");
+      setIsLoading(false);
+      return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address")
-      setIsLoading(false)
-      return
+      setError("Please enter a valid email address");
+      setIsLoading(false);
+      return;
     }
 
-    // Mock authentication - replace with real API call
-    setTimeout(() => {
-      // Simulate successful login
-      localStorage.setItem("user", JSON.stringify({ email, name: email.split("@")[0] }))
-      router.push("/dashboard/upload")
-    }, 800)
-  }
+    try {
+      // Gọi API login
+      await login({ email, password });
+      // Router push được xử lý trong auth context
+    } catch (err) {
+      setError(handleApiError(err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-md">
@@ -53,25 +63,37 @@ export default function LoginPage() {
               AI
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">AI Coach</CardTitle>
-          <CardDescription className="text-gray-600">CV Processing System</CardDescription>
+          <CardTitle className="text-2xl font-bold text-gray-900">
+            AI Coach
+          </CardTitle>
+          <CardDescription className="text-gray-600">
+            CV Processing System
+          </CardDescription>
         </CardHeader>
 
         <CardContent>
           {error && (
             <Alert className="mb-4 bg-red-50 border-red-200">
               <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-700">{error}</AlertDescription>
+              <AlertDescription className="text-red-700">
+                {error}
+              </AlertDescription>
             </Alert>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Field */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Email</label>
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-700"
+              >
+                Email
+              </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
+                  id="email"
                   type="email"
                   placeholder="you@example.com"
                   value={email}
@@ -83,10 +105,16 @@ export default function LoginPage() {
 
             {/* Password Field */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Password</label>
+              <label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-700"
+              >
+                Password
+              </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
+                  id="password"
                   type="password"
                   placeholder="••••••••"
                   value={password}
@@ -97,19 +125,19 @@ export default function LoginPage() {
             </div>
 
             {/* Forgot Password Link */}
-            <div className="text-right">
+            {/* <div className="text-right">
               <Link href="/auth/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
                 Forgot password?
               </Link>
-            </div>
+            </div> */}
 
             {/* Login Button */}
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || authLoading}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors"
             >
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading || authLoading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
 
@@ -121,7 +149,7 @@ export default function LoginPage() {
           </div>
 
           {/* Third-party Login */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          {/* <div className="grid grid-cols-2 gap-3 mb-6">
             <Button type="button" variant="outline" className="border-gray-300 hover:bg-gray-50 bg-transparent">
               <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                 <path
@@ -149,17 +177,20 @@ export default function LoginPage() {
               </svg>
               Facebook
             </Button>
-          </div>
+          </div> */}
 
           {/* Register Link */}
           <p className="text-center text-sm text-gray-600">
             Don't have an account?{" "}
-            <Link href="/auth/register" className="text-blue-600 hover:text-blue-700 font-medium">
+            <Link
+              href="/auth/register"
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
               Sign up
             </Link>
           </p>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
