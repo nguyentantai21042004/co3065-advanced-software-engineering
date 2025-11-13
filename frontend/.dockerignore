@@ -1,0 +1,49 @@
+# Dependencies and source files (not needed in runtime container)
+node_modules
+.pnpm-store
+# pnpm-lock.yaml is needed for frozen-lockfile install
+*.ts
+*.tsx
+components
+hooks
+lib
+app
+styles
+tsconfig.json
+next.config.mjs
+postcss.config.mjs
+components.json
+
+# Development files
+.git
+.gitignore
+.env*.local
+*.log
+.DS_Store
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Testing
+coverage
+.nyc_output
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Documentation
+README.md
+*.md
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Keep .next/standalone, .next/static, and public for runtime
+# These will be copied into the container
+
