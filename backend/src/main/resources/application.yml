@@ -43,9 +43,16 @@ spring:
     listener:
       simple:
         acknowledge-mode: auto
-        concurrency: 3
-        max-concurrency: 10
-        prefetch: 10
+        concurrency: 1
+        max-concurrency: 5
+        prefetch: 1
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 5000
+          multiplier: 2.0
+          max-interval: 30000
+        default-requeue-rejected: false
 
 # MinIO Configuration (S3-Compatible Storage)
 minio:
@@ -62,7 +69,7 @@ gemini:
   default-model: ${GEMINI_MODEL:gemini-2.5-flash}
   default-temperature: ${GEMINI_TEMPERATURE:0.7}
   default-max-tokens: ${GEMINI_MAX_TOKENS:4096}
-  timeout-ms: ${GEMINI_TIMEOUT_MS:90000}
+  timeout-ms: ${GEMINI_TIMEOUT_MS:120000}
   key-strategy: ${GEMINI_KEY_STRATEGY:ROUND_ROBIN} # ROUND_ROBIN, RANDOM, FAILOVER
   retry:
     max-retries: ${GEMINI_MAX_RETRIES:3}

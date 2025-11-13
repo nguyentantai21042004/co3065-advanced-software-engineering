@@ -19,4 +19,9 @@ public interface CVAnalysisResultRepository extends JpaRepository<CVAnalysisResu
      * Check if analysis result exists for extraction result ID
      */
     boolean existsByExtractionResultId(UUID extractionResultId);
+
+    /**
+     * Find analysis result by file ID
+     */
+    CVAnalysisResultEntity findByFileId(UUID fileId);
 }

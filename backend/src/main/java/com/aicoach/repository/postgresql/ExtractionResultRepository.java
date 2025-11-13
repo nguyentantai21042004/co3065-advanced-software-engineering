@@ -7,5 +7,8 @@ import java.util.UUID;
 
 @Repository
 public interface ExtractionResultRepository extends JpaRepository<ExtractionResultEntity, UUID> {
-    // Extra methods if needed
+    /**
+     * Find extraction result by file ID
+     */
+    ExtractionResultEntity findByFileId(UUID fileId);
 }

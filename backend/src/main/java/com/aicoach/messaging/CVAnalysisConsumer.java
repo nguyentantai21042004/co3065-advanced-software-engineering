@@ -128,15 +128,10 @@ public class CVAnalysisConsumer {
                         log.error("Error processing CV analysis task: taskId={}, error={}",
                                         message.getTaskId(), e.getMessage(), e);
 
-                        message.incrementRetry();
-                        if (message.getRetryCount() >= 3) {
-                                log.error("Max retries reached for analysis task: taskId={}, sending to DLQ",
-                                                message.getTaskId());
-                        } else {
-                                log.info("Retrying analysis task: taskId={}, retryCount={}",
-                                                message.getTaskId(), message.getRetryCount());
-                                throw new RuntimeException("Retry analysis task: " + e.getMessage(), e);
-                        }
+                        // Throw exception to trigger DLQ - Spring AMQP will handle retries based on configuration
+                        log.error("CV analysis task failed: taskId={}, message will be sent to DLQ",
+                                        message.getTaskId());
+                        throw new RuntimeException("CV analysis task failed: " + e.getMessage(), e);
                 }
         }
 
