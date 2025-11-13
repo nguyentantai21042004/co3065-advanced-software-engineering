@@ -298,29 +298,8 @@ http://localhost:8090/swagger-ui.html
 
 - [Backend Architecture](backend/docs/ARCHITECTURE.md) - Kiến trúc chi tiết của backend
 - [CV Processing API](backend/docs/CV-PROCESSING-API.md) - Tài liệu API xử lý CV
-- [Project Index](backend/docs/PROJECT_INDEX.md) - Chỉ mục tài liệu dự án
 - [RabbitMQ Architecture](backend/docs/RABBITMQ-ARCHITECTURE.md) - Kiến trúc message queue
 - [Development Guide](backend/docs/MODULE_DEVELOPMENT_GUIDE.md) - Hướng dẫn phát triển module mới
-
-## Đóng góp
-
-Dự án này được phát triển cho môn học CO3065. Nếu bạn muốn đóng góp:
-
-1. Fork repository
-2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Tạo Pull Request
-
-## License
-
-Dự án này được phát triển cho mục đích học tập. Xem file `LICENSE` để biết thêm chi tiết.
-
-## Tác giả
-
-**Nhóm CO3065 - HK251**
-
-- Đại học Bách Khoa TP.HCM
 
 ## Lời cảm ơn
 
