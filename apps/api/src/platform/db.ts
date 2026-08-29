@@ -14,7 +14,9 @@ const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL
+    password VARCHAR(255) NOT NULL,
+    display_name TEXT,
+    locale TEXT DEFAULT 'vi'
 );
 
 CREATE TABLE IF NOT EXISTS uploaded_file (
@@ -61,6 +63,44 @@ CREATE TABLE IF NOT EXISTS cv_analysis_result (
 
 CREATE INDEX IF NOT EXISTS idx_cv_analysis_extraction_result_id ON cv_analysis_result(extraction_result_id);
 CREATE INDEX IF NOT EXISTS idx_cv_analysis_file_id ON cv_analysis_result(file_id);
+
+CREATE TABLE IF NOT EXISTS advice_snapshot (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id),
+    file_id UUID NOT NULL REFERENCES uploaded_file(file_id),
+    analysis_id UUID NOT NULL REFERENCES cv_analysis_result(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    domain TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    report JSONB NOT NULL,
+    fingerprint TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_advice_snapshot_user_created
+  ON advice_snapshot(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_advice_snapshot_user_file_created
+  ON advice_snapshot(user_id, file_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS advice_pin (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id),
+    source_snapshot_id UUID NULL REFERENCES advice_snapshot(id),
+    file_id UUID NULL REFERENCES uploaded_file(file_id),
+    section TEXT NOT NULL,
+    body TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'todo',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMPTZ NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_advice_pin_user_created
+  ON advice_pin(user_id, created_at DESC);
+`;
+
+const ALTER_SQL = `
+ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS locale TEXT DEFAULT 'vi';
 `;
 
 function wrapPglite(db: PGlite): Sql {
@@ -125,4 +165,5 @@ export async function openDatabaseFromConfig(cfg: Config, inMemory = false): Pro
 
 export async function migrate(db: Sql): Promise<void> {
   await db.exec(SCHEMA_SQL);
+  await db.exec(ALTER_SQL);
 }

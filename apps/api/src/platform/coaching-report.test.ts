@@ -42,7 +42,8 @@ describe('buildCoachingReport', () => {
     expect(report.recommendations.length).toBeGreaterThan(0);
     expect(report.recommendations.every((row) => row.length > 0)).toBe(true);
 
-    // Software fixture should not collapse to empty domain
-    expect(report.domain_inference.domain.toLowerCase()).toMatch(/software|engineering|professional/);
+    // Software fixture should land in kỹ thuật / engineering family
+    expect(report.domain_inference.domain.toLowerCase()).toMatch(/kỹ thuật|phần mềm|software|engineering|chuyên môn/);
+    expect(report.recommendations[0]).toMatch(/[àáạảãâăèéẹẻẽêìíòóọỏõôơùúụủũưỳýỵỷỹđ]/i);
   });
 });

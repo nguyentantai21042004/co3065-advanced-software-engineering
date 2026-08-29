@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { Config } from '../config.js';
+import { registerAdviceRoutes } from '../modules/advice/routes.js';
+import { AdviceService } from '../modules/advice/service.js';
 import { registerCvRoutes } from '../modules/cv/routes.js';
 import { registerCvWorker } from '../modules/cv/worker.js';
 import { registerSystemRoutes } from '../modules/system/routes.js';
@@ -30,12 +32,22 @@ export interface AppDeps extends RouteCtx {
 }
 
 export function buildApp(deps: AppDeps): Hono<{ Variables: AuthVars }> {
+  const advice = new AdviceService(deps.repos.advice, deps.repos.users);
   registerCvWorker({
     queue: deps.queue,
     repo: deps.repos.cv,
     storage: deps.storage,
     extractor: deps.extractor,
     analyzer: deps.analyzer,
+    onAnalysisComplete: async ({ fileId, userId, analysisId, report }) => {
+      if (!userId) return;
+      await advice.recordSnapshot({
+        userId,
+        fileId,
+        analysisId,
+        report,
+      });
+    },
   });
 
   const app = new Hono<{ Variables: AuthVars }>();
@@ -53,6 +65,7 @@ export function buildApp(deps: AppDeps): Hono<{ Variables: AuthVars }> {
   registerSystemRoutes(app, PREFIX);
   registerUserRoutes(app, PREFIX, deps);
   registerCvRoutes(app, PREFIX, deps);
+  registerAdviceRoutes(app, PREFIX, deps);
 
   app.notFound((c) => c.json({ error_code: 404, message: 'Not found', data: null }, 404));
 

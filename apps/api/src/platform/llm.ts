@@ -1,5 +1,6 @@
-import type { CoachingReportWire } from '@aicoach/shared/contracts/cv';
+import { coachingReportSchema, type CoachingReportWire } from '@aicoach/shared/contracts/cv';
 import { buildCoachingReport } from './coaching-report.js';
+import { decodeUnicodeEscapesDeep } from './cv-text.js';
 
 export interface CvAnalysis {
   basic_info: Record<string, unknown>;
@@ -92,12 +93,24 @@ class GeminiAnalyzer implements Analyzer {
 
   async analyze(rawText: string): Promise<CvAnalysis> {
     const fallback = stubAnalyze(rawText);
-    const prompt = `Extract structured CV data. Return ONLY JSON with keys:
+    const prompt = `Bạn là coach nghề nghiệp tại Việt Nam. Phân tích CV và trả về ĐÚNG một JSON (không markdown) với các khóa:
 basic_info (object: name, email, phone, gender 0/1/2, address, date_of_birth),
 education (array of {school_name, degree, major, graduation_date}),
 work_experience (array of {company_name, position, time}),
 skills (array of {name, category, level 0-100, level_label}),
-certificates_languages ({certificates:[{name,organization,date}], languages:[{name,proficiency}]}).
+certificates_languages ({certificates:[{name,organization,date}], languages:[{name,proficiency}]}),
+coaching_report ({
+  domain_inference: { domain, job_titles: string[], summary },
+  format_critique: { summary, findings: string[] },
+  experience_comments: { summary, strengths: string[], gaps: string[] },
+  recommendations: string[]
+}).
+
+Yêu cầu:
+- Tất cả summary/findings/recommendations/strengths/gaps viết bằng tiếng Việt, cụ thể, actionable.
+- domain ngắn gọn (vd "Kỹ thuật phần mềm").
+- job_titles có thể giữ tên tiếng Anh phổ biến trên JD VN.
+- Không bịa kinh nghiệm không có trong CV.
 
 CV text:
 ${rawText.slice(0, 24_000)}`;
@@ -105,7 +118,7 @@ ${rawText.slice(0, 24_000)}`;
     let lastError: unknown;
     for (const key of this.keys) {
       try {
-        const parsed = asRecord(await this.call(key, prompt));
+        const parsed = asRecord(decodeUnicodeEscapesDeep(await this.call(key, prompt)));
         const basic_info = asRecord(parsed.basic_info ?? parsed);
         const education = parsed.education ?? [];
         const work_experience = parsed.work_experience ?? [];
@@ -113,13 +126,16 @@ ${rawText.slice(0, 24_000)}`;
         const certificates_languages =
           parsed.certificates_languages ?? { certificates: parsed.certificates ?? [], languages: parsed.languages ?? [] };
         const resolvedBasic = Object.keys(basic_info).length ? basic_info : fallback.basic_info;
-        const coaching_report = buildCoachingReport(rawText, {
-          basic_info: resolvedBasic,
-          education,
-          work_experience,
-          skills,
-          certificates_languages,
-        });
+        const parsedReport = coachingReportSchema.safeParse(parsed.coaching_report);
+        const coaching_report = parsedReport.success
+          ? parsedReport.data
+          : buildCoachingReport(rawText, {
+              basic_info: resolvedBasic,
+              education,
+              work_experience,
+              skills,
+              certificates_languages,
+            });
         return {
           basic_info: resolvedBasic,
           education,

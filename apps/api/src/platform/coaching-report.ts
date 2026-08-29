@@ -10,22 +10,23 @@ export interface StructuredCvHints {
 
 const DOMAIN_KEYWORDS: { domain: string; titles: string[]; needles: RegExp }[] = [
   {
-    domain: 'Software Engineering',
+    domain: 'Kỹ thuật phần mềm',
     titles: ['Software Engineer', 'Backend Engineer', 'Full-stack Developer'],
-    needles: /\b(typescript|javascript|java|golang|go\b|python|react|node\.?js|spring|kubernetes|microservice|api)\b/i,
+    needles:
+      /\b(typescript|javascript|java|golang|go\b|python|react|node\.?js|spring|kubernetes|microservice|api|golang|rust)\b/i,
   },
   {
-    domain: 'Data / Analytics',
+    domain: 'Dữ liệu / Phân tích',
     titles: ['Data Analyst', 'Data Engineer', 'ML Engineer'],
     needles: /\b(sql|pandas|spark|etl|machine learning|data science|tableau|warehouse)\b/i,
   },
   {
-    domain: 'Product / Design',
+    domain: 'Sản phẩm / Thiết kế',
     titles: ['Product Manager', 'UX Designer', 'Product Designer'],
     needles: /\b(product manager|figma|user research|wireframe|roadmap|ux|ui design)\b/i,
   },
   {
-    domain: 'Operations / Business',
+    domain: 'Vận hành / Kinh doanh',
     titles: ['Operations Specialist', 'Business Analyst', 'Project Coordinator'],
     needles: /\b(operations|business analyst|stakeholder|kpi|process improvement|excel)\b/i,
   },
@@ -57,7 +58,7 @@ function inferDomain(rawText: string, hints: StructuredCvHints): CoachingReportW
       return {
         domain: row.domain,
         job_titles: row.titles,
-        summary: `Based on skills and wording in the CV, the strongest fit is ${row.domain}. Target roles such as ${row.titles.join(', ')}.`,
+        summary: `Dựa trên kỹ năng và nội dung CV, hướng phù hợp nhất là ${row.domain}. Nên nhắm các vị trí như ${row.titles.join(', ')}.`,
       };
     }
   }
@@ -65,16 +66,16 @@ function inferDomain(rawText: string, hints: StructuredCvHints): CoachingReportW
   const position = String(titleHint?.position ?? titleHint?.title ?? '').trim();
   if (position) {
     return {
-      domain: 'General professional',
+      domain: 'Chuyên môn tổng quát',
       job_titles: [position],
-      summary: `The CV leans toward roles similar to "${position}". Clarify domain keywords so recruiters can classify the profile faster.`,
+      summary: `CV đang nghiêng về các vai trò gần với "${position}". Bổ sung từ khóa domain để nhà tuyển dụng phân loại nhanh hơn.`,
     };
   }
   return {
-    domain: 'General professional',
+    domain: 'Chuyên môn tổng quát',
     job_titles: ['Individual Contributor', 'Specialist'],
     summary:
-      'Domain signals are thin. Add a one-line professional summary and 5–8 role keywords so the intended job family is obvious.',
+      'Tín hiệu domain còn mỏng. Thêm 1 đoạn tóm tắt nghề nghiệp và 5–8 từ khóa vai trò để làm rõ hướng ứng tuyển.',
   };
 }
 
@@ -82,31 +83,31 @@ function critiqueFormat(rawText: string, hints: StructuredCvHints): CoachingRepo
   const findings: string[] = [];
   const lines = lineCount(rawText);
   if (lines < 8) {
-    findings.push('The CV body is very short; expand into clear sections (Summary, Experience, Education, Skills).');
+    findings.push('Nội dung CV quá ngắn; hãy tách rõ các mục Tóm tắt, Kinh nghiệm, Học vấn, Kỹ năng.');
   }
   if (!hasEmail(rawText) && !String(hints.basic_info?.email ?? '')) {
-    findings.push('No email address detected in the header — recruiters need a reachable contact.');
+    findings.push('Chưa thấy email ở phần đầu — nhà tuyển dụng cần cách liên hệ rõ ràng.');
   }
   if (!hasPhone(rawText) && !String(hints.basic_info?.phone ?? '')) {
-    findings.push('Phone number is missing; optional but still common for local applications.');
+    findings.push('Thiếu số điện thoại; với thị trường Việt Nam nên để lại (có thể ghi khu vực).');
   }
-  if (!/\b(experience|work|employment|education|skills|projects)\b/i.test(rawText)) {
-    findings.push('Section headings are unclear or missing; use consistent headings recruiters can scan.');
+  if (!/(experience|work|employment|education|skills|projects|kinh nghiệm|học vấn|kỹ năng|dự án)/i.test(rawText)) {
+    findings.push('Tiêu đề mục chưa rõ; dùng heading nhất quán để ATS và người đọc scan nhanh.');
   }
   if (rawText.length > 6_000) {
-    findings.push('The document is long for a first screen; trim older roles and keep the first page focused.');
+    findings.push('CV hơi dài cho màn hình đầu; nên rút gọn vai trò cũ, giữ trang 1 tập trung.');
   }
   if (asList(hints.work_experience).length === 0 && !/\b(20\d{2}|19\d{2})\b/.test(rawText)) {
-    findings.push('Dates / timeline markers are weak; add start–end years next to each role.');
+    findings.push('Mốc thời gian yếu; thêm năm bắt đầu–kết thúc cạnh mỗi vai trò.');
   }
   if (findings.length === 0) {
-    findings.push('Structure looks readable; keep headings consistent and prefer bullet achievements over long paragraphs.');
+    findings.push('Bố cục đã đọc được; giữ heading thống nhất và ưu tiên bullet thành tựu hơn đoạn dài.');
   }
   return {
     summary:
       findings.length >= 3
-        ? 'Format needs tightening before you send it to ATS or hiring managers.'
-        : 'Format is usable with a few polish items.',
+        ? 'Định dạng cần chỉnh trước khi gửi ATS hoặc nhà tuyển dụng.'
+        : 'Định dạng ổn, còn vài điểm nên polish.',
     findings,
   };
 }
@@ -120,37 +121,37 @@ function commentExperience(
   const gaps: string[] = [];
 
   if (roles.length > 0) {
-    strengths.push(`Parsed ${roles.length} work experience entr${roles.length === 1 ? 'y' : 'ies'} from the CV.`);
-  } else if (/\b(engineer|developer|analyst|manager|intern)\b/i.test(rawText)) {
-    strengths.push('Role titles appear in the text even if structured experience was sparse.');
+    strengths.push(`Đã nhận diện ${roles.length} mục kinh nghiệm làm việc từ CV.`);
+  } else if (/\b(engineer|developer|analyst|manager|intern|kỹ sư|lập trình)\b/i.test(rawText)) {
+    strengths.push('Có chức danh nghề nghiệp trong văn bản dù phần kinh nghiệm cấu trúc còn mỏng.');
   } else {
-    gaps.push('Little concrete work history is visible — add 2–3 roles with scope and impact.');
+    gaps.push('Ít lịch sử công việc cụ thể — hãy thêm 2–3 vai trò kèm phạm vi và tác động.');
   }
 
-  if (/\b(\d+%|increased|reduced|led|owned|shipped|launched)\b/i.test(rawText)) {
-    strengths.push('Some achievement / impact language is present (metrics or ownership verbs).');
+  if (/\b(\d+%|increased|reduced|led|owned|shipped|launched|giảm|tăng|phụ trách|triển khai)\b/i.test(rawText)) {
+    strengths.push('Có ngôn ngữ thành tựu / tác động (số liệu hoặc động từ ownership).');
   } else {
-    gaps.push('Achievements read generic; rewrite bullets with action + context + measurable result.');
+    gaps.push('Thành tựu còn chung chung; viết lại bullet theo công thức hành động + bối cảnh + kết quả đo được.');
   }
 
-  if (asList(hints.skills).length > 0 || /\b(skills?|technologies)\b/i.test(rawText)) {
-    strengths.push('Skills are mentioned; group them by category (languages, tools, soft skills).');
+  if (asList(hints.skills).length > 0 || /\b(skills?|technologies|kỹ năng|công nghệ)\b/i.test(rawText)) {
+    strengths.push('Đã đề cập kỹ năng; nên nhóm theo ngôn ngữ / công cụ / soft skills.');
   } else {
-    gaps.push('Skill list is thin — surface the tools you actually used in recent roles.');
+    gaps.push('Danh sách kỹ năng mỏng — nêu rõ công cụ đã dùng ở các vai trò gần đây.');
   }
 
   if (strengths.length === 0) {
-    strengths.push('There is enough raw material to build a stronger narrative with editing.');
+    strengths.push('Đã có đủ nguyên liệu thô để xây narrative mạnh hơn sau khi chỉnh sửa.');
   }
   if (gaps.length === 0) {
-    gaps.push('Deepen one flagship project so reviewers understand your strongest contribution.');
+    gaps.push('Đào sâu một dự án chủ lực để reviewer hiểu đóng góp nổi bật nhất.');
   }
 
   return {
     summary:
       roles.length > 0
-        ? 'Experience is present but should emphasize outcomes over duties.'
-        : 'Experience narrative needs more concrete roles and outcomes.',
+        ? 'Kinh nghiệm đã có, nên nhấn mạnh kết quả hơn là liệt kê nhiệm vụ.'
+        : 'Phần kinh nghiệm cần thêm vai trò và kết quả cụ thể.',
     strengths,
     gaps,
   };
@@ -162,22 +163,22 @@ function buildRecommendations(
   experience: CoachingReportWire['experience_comments'],
 ): string[] {
   const out: string[] = [
-    `Lead with a 2–3 sentence summary aimed at ${domain.job_titles[0] ?? domain.domain}.`,
-    'Rewrite each recent role with 3–5 bullets: action verb, scope, and a metric where possible.',
-    `Mirror keywords from ${domain.domain} job posts in the skills and summary sections (honest matches only).`,
+    `Viết 2–3 câu tóm tắt nghề nghiệp nhắm tới ${domain.job_titles[0] ?? domain.domain}.`,
+    'Mỗi vai trò gần đây: 3–5 bullet gồm động từ hành động, phạm vi, và số liệu nếu có.',
+    `Ghép từ khóa từ JD ${domain.domain} vào mục kỹ năng và tóm tắt (chỉ những gì đúng thật).`,
   ];
-  if (format.findings[0]) out.push(`Format fix: ${format.findings[0]}`);
-  if (experience.gaps[0]) out.push(`Experience fix: ${experience.gaps[0]}`);
-  out.push('Export the coaching report (PDF/Word) and iterate before sending applications.');
+  if (format.findings[0]) out.push(`Chỉnh format: ${format.findings[0]}`);
+  if (experience.gaps[0]) out.push(`Chỉnh kinh nghiệm: ${experience.gaps[0]}`);
+  out.push('Xuất báo cáo coaching (PDF/Word), chỉnh theo checklist rồi mới nộp hồ sơ.');
   return out.slice(0, 6);
 }
 
 /**
  * buildCoachingReport turns raw CV text plus structured extract hints into the four
- * coaching sections used by the API wire and PDF/Word exporters.
+ * coaching sections (tiếng Việt) used by the API wire and PDF/Word exporters.
  */
 export function buildCoachingReport(rawText: string, hints: StructuredCvHints = {}): CoachingReportWire {
-  const text = (rawText || '').trim() || 'Empty CV';
+  const text = (rawText || '').trim() || 'CV trống';
   const domain_inference = inferDomain(text, hints);
   const format_critique = critiqueFormat(text, hints);
   const experience_comments = commentExperience(text, hints);

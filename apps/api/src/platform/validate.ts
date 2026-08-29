@@ -22,3 +22,13 @@ export function validateParams<S extends z.ZodTypeAny>(c: Context, schema: S): z
   }
   return result.data;
 }
+
+/** Query string params. */
+export function validateQuery<S extends z.ZodTypeAny>(c: Context, schema: S): z.infer<S> {
+  const result = schema.safeParse(c.req.query());
+  if (!result.success) {
+    const detail = result.error.issues.map((issue) => issue.message).join('; ');
+    throw badRequest(detail || 'Invalid query parameters');
+  }
+  return result.data;
+}
