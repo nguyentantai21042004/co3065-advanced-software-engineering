@@ -28,10 +28,10 @@ Register at `/auth/register`, then `/dashboard/upload` a PDF/DOCX/DOC. Extract i
 
 ```
 apps/api          Hono API, port 8090
-  src/platform/   http, auth, db, storage, queue, llm, extract, coaching-report, export-report
-  src/modules/    users | cv | system   (routes → handlers → service → repo)
+  src/platform/   http, auth, db, storage, queue, llm, extract, coaching-report, export-report, cv-text
+  src/modules/    users | cv | advice | system   (routes → handlers → service → repo)
 apps/web          Next.js App Router, port 3000
-packages/shared   Zod wire contracts (snake_case JSON), including coaching_report
+packages/shared   Zod wire contracts (snake_case JSON), including coaching_report + advice
 ```
 
 Handlers own the Hono context `c`. Services take plain arguments. Repos own SQL. The composition root (`platform/composition.ts`) constructs repos once.
@@ -43,6 +43,17 @@ Handlers own the Hono context `c`. Services take plain arguments. Repos own SQL.
 3. Worker: extract text → structured fields → **coaching report** (stub or Gemini)
 4. Read results → `GET /api/cv/data/{file_id}` includes `coaching_report`
 5. Export coaching report → `GET /api/cv/export/{file_id}/pdf` or `.../docx` (authenticated binary download)
+6. Personalization → auto `advice_snapshot` per analyze; pin recommendations; account-level diff at `/dashboard/advice`
+
+### Advice (cá nhân hoá)
+
+| Method | Path | Ý nghĩa |
+| --- | --- | --- |
+| GET | `/api/advice/snapshots` | Timeline snapshot lời khuyên theo account |
+| GET | `/api/advice/diff` | So sánh 2 snapshot (mặc định latest vs previous) |
+| GET/POST/PATCH/DELETE | `/api/advice/pins` | Sổ tay ghim thủ công |
+
+Extract text được `cleanCvText` (học từ ATS) trước khi LLM/stub; báo cáo stub/LLM mặc định **tiếng Việt**.
 
 ## Infra (local / free-tier)
 

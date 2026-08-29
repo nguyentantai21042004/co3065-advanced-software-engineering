@@ -55,6 +55,7 @@ flowchart TB
   subgraph api["apps/api/src/modules"]
     users["users<br/>register / login"]
     cv["cv<br/>upload extract data list export worker"]
+    advice["advice<br/>snapshots pins diff"]
     system["system<br/>health"]
   end
 
@@ -65,27 +66,34 @@ flowchart TB
     q["queue"]
     llm["llm"]
     extract["extract"]
+    clean["cv-text cleanCvText"]
     coach["coaching-report"]
     exp["export-report"]
   end
 
   users --> http
   cv --> http
+  advice --> http
   system --> http
   users --> db
   cv --> db
+  advice --> db
   cv --> store
   cv --> q
   cv --> llm
   cv --> extract
+  extract --> clean
   llm --> coach
   cv --> exp
+  cv -.->|onAnalysisComplete| advice
 ```
 
 - `users` — register / login
 - `cv` — upload, extract, data, list, supported-types, **export pdf/docx**, worker
+- `advice` — auto snapshots, manual pins, account-level diff
 - `system` — health
-- `coaching-report` — pure builder for domain / format / experience / recommendations
+- `cv-text` — ATS-inspired `cleanCvText` / `hasEnoughText` (no OCR in this demo)
+- `coaching-report` — pure builder for domain / format / experience / recommendations (tiếng Việt)
 - `export-report` — PDF + Word binaries of that report (not the original CV)
 
 ## Wire
