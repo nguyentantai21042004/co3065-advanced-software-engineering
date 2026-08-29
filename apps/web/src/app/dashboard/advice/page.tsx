@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { History, GitCompare, Bookmark, Trash2, CheckCircle2, ArrowRight } from 'lucide-react';
+import { notify } from '@/lib/notify';
 
 export default function AdvicePage() {
   const [snapshots, setSnapshots] = useState<AdviceSnapshotWire[]>([]);
@@ -20,28 +21,24 @@ export default function AdvicePage() {
   const [diff, setDiff] = useState<AdviceDiffWire | null>(null);
   const [leftId, setLeftId] = useState('');
   const [rightId, setRightId] = useState('');
-  const [error, setError] = useState('');
   const [pinBody, setPinBody] = useState('');
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    setError('');
     try {
-      const [snapRes, pinRes] = await Promise.all([
-        api<AdviceSnapshotListWire>('/advice/snapshots'),
-        api<AdvicePinWire[]>('/advice/pins'),
-      ]);
-      const items = snapRes.data?.items ?? [];
-      setSnapshots(items);
-      setPins(pinRes.data ?? []);
-      if (items.length >= 2) {
-        setRightId((prev) => prev || items[0]!.id);
-        setLeftId((prev) => prev || items[1]!.id);
+      const sRes = await api<AdviceSnapshotListWire>('/advice/snapshots');
+      const pRes = await api<AdvicePinWire[]>('/advice/pins');
+      setSnapshots(sRes.data?.items ?? []);
+      setPins(pRes.data ?? []);
+      if ((sRes.data?.items?.length ?? 0) >= 2 && !leftId && !rightId) {
+        const list = sRes.data!.items;
+        setLeftId(list[1]!.id);
+        setRightId(list[0]!.id);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không tải được dữ liệu lời khuyên');
+    } catch {
+      // API not available or empty — safe fallback
     }
-  }, []);
+  }, [leftId, rightId]);
 
   useEffect(() => {
     void load();
@@ -52,7 +49,6 @@ export default function AdvicePage() {
 
   async function runDiff() {
     setBusy(true);
-    setError('');
     try {
       const q =
         leftId && rightId
@@ -60,8 +56,9 @@ export default function AdvicePage() {
           : '';
       const res = await api<AdviceDiffWire>(`/advice/diff${q}`);
       setDiff(res.data ?? null);
+      notify.success('So sánh hoàn tất', 'Đã tính toán các thay đổi giữa 2 mốc phân tích.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không so sánh được');
+      notify.error('So sánh phiên bản thất bại', err);
     } finally {
       setBusy(false);
     }
@@ -81,8 +78,9 @@ export default function AdvicePage() {
       });
       setPinBody('');
       await load();
+      notify.success('Đã ghim mục tiêu mới');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ghim thất bại');
+      notify.error('Ghim mục tiêu thất bại', err);
     } finally {
       setBusy(false);
     }
@@ -95,8 +93,9 @@ export default function AdvicePage() {
         body: JSON.stringify({ status }),
       });
       await load();
+      notify.success('Đã cập nhật trạng thái mục tiêu');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Cập nhật pin thất bại');
+      notify.error('Cập nhật trạng thái thất bại', err);
     }
   }
 
@@ -104,8 +103,9 @@ export default function AdvicePage() {
     try {
       await api(`/advice/pins/${id}`, { method: 'DELETE' });
       await load();
+      notify.success('Đã xoá mục tiêu');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Xoá pin thất bại');
+      notify.error('Xoá mục tiêu thất bại', err);
     }
   }
 
@@ -117,18 +117,11 @@ export default function AdvicePage() {
           { label: 'Lời khuyên cá nhân' },
         ]}
         title="Lời khuyên &amp; Tiến trình cá nhân"
-        description="Snapshot tự động sau mỗi lần phân tích CV, so sánh thay đổi và quản lý sổ tay mục tiêu."
-        maxWidthClass="max-w-[1280px]"
+        maxWidthClass="max-w-6xl"
       />
 
       <PageScroll mode="scroll">
-        <PageContent width="detail" className="space-y-6">
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
-              {error}
-            </div>
-          )}
-
+        <PageContent width="container" className="space-y-6">
           {/* Section 1: Timeline Snapshots */}
           <Card className="p-6 bg-white border border-slate-200 shadow-soft-xs">
             <div className="flex items-center gap-2 mb-4">
@@ -219,11 +212,11 @@ export default function AdvicePage() {
 
             <div className="mt-4 flex items-center gap-3">
               <Button
-                size="sm"
+                size="md"
                 disabled={busy || snapshots.length < 2}
                 onClick={() => void runDiff()}
               >
-                {busy ? 'Đang so sánh…' : 'Thực hiện so sánh'}
+                <span className="t-text-swap">{busy ? 'Đang so sánh…' : 'Thực hiện so sánh'}</span>
               </Button>
 
               {(selectedLeft || selectedRight) && (
@@ -234,7 +227,7 @@ export default function AdvicePage() {
             </div>
 
             {diff && (
-              <div className="mt-5 space-y-3.5 rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-xs">
+              <div className="mt-5 space-y-3.5 rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-xs animate-fade-in t-reveal">
                 <p className="font-semibold text-slate-900">
                   Lĩnh vực:{' '}
                   {diff.changes.domain_changed ? (
@@ -262,15 +255,15 @@ export default function AdvicePage() {
               <h2 className="text-sm font-bold text-slate-900">Sổ tay ghim mục tiêu</h2>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col sm:flex-row gap-2.5">
               <input
                 value={pinBody}
                 onChange={(e) => setPinBody(e.target.value)}
                 placeholder="Ghim một việc cần làm hoặc lời khuyên quan trọng…"
-                className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none transition-colors"
+                className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none transition-colors shadow-soft-xs"
               />
               <Button
-                size="sm"
+                size="md"
                 disabled={busy || !pinBody.trim()}
                 onClick={() => void createPin()}
               >

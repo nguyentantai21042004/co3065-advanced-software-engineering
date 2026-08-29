@@ -18,6 +18,7 @@ import {
 import { PageFrame, PageHeader, PageScroll, PageContent } from '@/components/shell/page-frame';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { notify } from '@/lib/notify';
 import { Badge } from '@/components/ui/badge';
 
 export default function SettingsPage() {
@@ -29,10 +30,18 @@ export default function SettingsPage() {
     fetch(`${API_URL}/health`)
       .then((res) => res.json())
       .then((data) => {
-        if (data?.data?.ok) setHealth('healthy');
-        else setHealth('unreachable');
+        if (data?.data?.ok) {
+          setHealth('healthy');
+          notify.success('Kết nối hệ thống ổn định', 'Dịch vụ API Gateway và bóc tách CV đang sẵn sàng hoạt động.');
+        } else {
+          setHealth('unreachable');
+          notify.warning('API phản hồi bất thường', 'Cổng API Gateway trả về trạng thái không sẵn sàng.');
+        }
       })
-      .catch(() => setHealth('unreachable'));
+      .catch((err) => {
+        setHealth('unreachable');
+        notify.error('Không thể kết nối API Gateway', err);
+      });
   }
 
   useEffect(() => {
@@ -42,6 +51,7 @@ export default function SettingsPage() {
   function handleCopyApi() {
     navigator.clipboard.writeText(API_URL);
     setCopied(true);
+    notify.info('Đã sao chép liên kết', 'Địa chỉ API Gateway đã được lưu vào bộ nhớ tạm.');
     setTimeout(() => setCopied(false), 2000);
   }
 
@@ -53,17 +63,16 @@ export default function SettingsPage() {
           { label: 'Hệ thống' },
         ]}
         title="Cấu hình &amp; Trạng thái hệ thống"
-        description="Thông tin kiểm tra kết nối API Gateway và hạ tầng xử lý tài liệu."
         actions={
-          <Button variant="outline" size="sm" onClick={checkHealth}>
-            Kiểm tra kết nối lại
+          <Button variant="outline" size="md" onClick={checkHealth}>
+            <span className="t-text-swap">Kiểm tra kết nối lại</span>
           </Button>
         }
-        maxWidthClass="max-w-3xl"
+        maxWidthClass="max-w-6xl"
       />
 
       <PageScroll mode="scroll">
-        <PageContent width="form" className="max-w-3xl space-y-5">
+        <PageContent width="container" className="space-y-5">
           {/* Health Status Banner */}
           <Card className="p-5 shadow-soft-xs bg-white flex items-center justify-between border border-slate-200">
             <div className="flex items-center gap-3">
@@ -114,16 +123,16 @@ export default function SettingsPage() {
                 <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                   Địa chỉ dịch vụ nội bộ
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <input
                     type="text"
                     readOnly
                     value={API_URL}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2 font-mono text-xs text-slate-900 select-all focus:outline-none"
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 font-mono text-xs text-slate-900 select-all focus:outline-none"
                   />
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="md"
                     onClick={handleCopyApi}
                   >
                     <span className="t-icon-swap mr-1.5" data-state={copied ? 'b' : 'a'}>

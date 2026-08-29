@@ -21,19 +21,21 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/empty-state';
+import { notify } from '@/lib/notify';
 
 export default function HistoryPage() {
   const [items, setItems] = useState<CvListItemWire[]>([]);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'processing'>('all');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     setLoading(true);
     api<CvListItemWire[]>('/cv/list')
       .then((res) => setItems(res.data ?? []))
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Không thể tải danh sách hồ sơ'))
+      .catch((err: unknown) => {
+        notify.error('Không thể tải danh sách hồ sơ', err);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -62,19 +64,18 @@ export default function HistoryPage() {
           { label: 'Lịch sử hồ sơ' },
         ]}
         title="Lịch sử hồ sơ CV"
-        description="Danh sách tất cả các hồ sơ ứng viên đã được tiếp nhận và phân tích trong hệ thống."
         actions={
           <Link href="/dashboard/upload">
-            <Button size="sm" leftIcon={<Upload className="h-4 w-4" />}>
+            <Button size="md" leftIcon={<Upload className="h-4 w-4" />}>
               Tải lên hồ sơ mới
             </Button>
           </Link>
         }
-        maxWidthClass="max-w-[1440px]"
+        maxWidthClass="max-w-6xl"
       />
 
       <PageScroll mode="scroll">
-        <PageContent width="default" className="space-y-5">
+        <PageContent width="container" className="space-y-5">
           {/* Stats Cards (Fleet Flat Style) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
             <Card className="p-4 flex items-center justify-between bg-white border border-slate-200 shadow-soft-xs">
@@ -115,23 +116,23 @@ export default function HistoryPage() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
             {/* Search */}
             <div className="relative flex-1 max-w-sm">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400">
-                <Search className="h-3.5 w-3.5" />
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <Search className="h-4 w-4" />
               </div>
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Tìm kiếm theo tên tệp…"
-                className="w-full rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-7 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none transition-colors shadow-soft-xs"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-8 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none transition-colors shadow-soft-xs"
               />
               {query && (
                 <button
                   type="button"
                   onClick={() => setQuery('')}
-                  className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400 hover:text-slate-700"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-700"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                 </button>
               )}
             </div>
@@ -147,12 +148,6 @@ export default function HistoryPage() {
               onChange={(tab) => setStatusFilter(tab as 'all' | 'completed' | 'processing')}
             />
           </div>
-
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
-              {error}
-            </div>
-          )}
 
           {/* Grid of CV Cards */}
           {filtered.length === 0 ? (

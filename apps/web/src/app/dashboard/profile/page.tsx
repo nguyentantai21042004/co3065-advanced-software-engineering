@@ -13,6 +13,7 @@ import { PageFrame, PageHeader, PageScroll, PageContent } from '@/components/she
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { notify } from '@/lib/notify';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -25,7 +26,8 @@ export default function ProfilePage() {
 
   const handleSignOut = () => {
     logout();
-    router.push('/auth/login');
+    notify.info('Đã đăng xuất', 'Phiên làm việc của bạn đã kết thúc an toàn.');
+    router.push('/');
   };
 
   const initial = email ? email.charAt(0).toUpperCase() : 'U';
@@ -38,24 +40,23 @@ export default function ProfilePage() {
           { label: 'Tài khoản' },
         ]}
         title="Hồ sơ tài khoản"
-        description="Thông tin xác thực phiên làm việc và bảo mật tài nguyên cá nhân."
         actions={
           <Button
             variant="outline"
-            size="sm"
-            leftIcon={<LogOut className="h-3.5 w-3.5 text-red-600" />}
+            size="md"
+            leftIcon={<LogOut className="h-4 w-4 text-red-600" />}
             onClick={handleSignOut}
             className="text-red-600 hover:bg-red-50 hover:border-red-200"
           >
-            Đăng xuất
+            <span className="t-text-swap">Đăng xuất</span>
           </Button>
         }
-        maxWidthClass="max-w-2xl"
+        maxWidthClass="max-w-6xl"
       />
 
       <PageScroll mode="scroll">
-        <PageContent width="form" className="max-w-2xl space-y-5">
-          <Card className="overflow-hidden shadow-soft-xs bg-white border border-slate-200">
+        <PageContent width="container" className="space-y-5">
+          <Card className="overflow-hidden shadow-soft-xs bg-white border border-slate-200 animate-fade-in t-reveal">
             {/* Banner */}
             <div className="bg-slate-900 h-20 relative">
               <div className="absolute -bottom-6 left-6">

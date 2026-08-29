@@ -20,13 +20,14 @@ import { PageFrame, PageHeader, PageScroll, PageContent } from '@/components/she
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { notify } from '@/lib/notify';
 
 type Phase = 'queued' | 'extracting' | 'analyzing' | 'done' | 'error';
 
 function ProcessingInner() {
   const router = useRouter();
-  const params = useSearchParams();
-  const fileId = params.get('file_id') ?? getCurrentFile()?.fileId;
+  const searchParams = useSearchParams();
+  const fileId = searchParams.get('file_id') ?? getCurrentFile()?.fileId;
   const [phase, setPhase] = useState<Phase>('queued');
   const [error, setError] = useState('');
   const [fileName, setFileName] = useState(getCurrentFile()?.name ?? 'Tài liệu hồ sơ');
@@ -34,13 +35,20 @@ function ProcessingInner() {
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
-    const current = getCurrentFile();
-    if (current?.name) setFileName(current.name);
-    if (current?.size) setFileSize(current.size);
+    const cur = getCurrentFile();
+    if (cur && cur.fileId === fileId) {
+      setFileName(cur.name);
+      setFileSize(cur.size);
+    } else {
+      setFileName(fileId ? `hồ-sơ-${fileId.slice(0, 8)}.pdf` : 'Hồ sơ chưa đặt tên');
+    }
+  }, [fileId]);
 
+  useEffect(() => {
     if (!fileId) {
-      setError('Không tìm thấy mã tệp hoạt động. Vui lòng tải lên tệp mới.');
       setPhase('error');
+      setError('Thiếu mã nhận diện file_id.');
+      notify.error('Không tìm thấy tệp', 'Mã nhận diện hồ sơ không hợp lệ hoặc đã bị xoá.');
       return;
     }
 
@@ -58,6 +66,7 @@ function ProcessingInner() {
         const data = res.data;
         if (data?.analysis_result || data?.coaching_report || data?.basic_info) {
           setPhase('done');
+          notify.success('Hoàn tất phân tích', 'Báo cáo năng lực và phản biện đã sẵn sàng.');
           return;
         }
         if (data?.raw_text) {
@@ -72,6 +81,7 @@ function ProcessingInner() {
         } else {
           setPhase('error');
           setError(err instanceof Error ? err.message : 'Xử lý thất bại ngoài dự kiến.');
+          notify.error('Xử lý hồ sơ thất bại', err);
           return;
         }
       }
@@ -122,9 +132,13 @@ function ProcessingInner() {
           { label: 'Tiến trình phân tích' },
         ]}
         title="Tiến trình đánh giá hồ sơ"
-        description={`Mã hồ sơ: ${fileId ?? '—'}`}
         meta={
           <div className="flex items-center gap-2">
+            {fileId && (
+              <span className="font-mono text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                #{fileId.slice(0, 8)}
+              </span>
+            )}
             <Badge
               variant={phase === 'done' ? 'success' : phase === 'error' ? 'danger' : 'brand'}
               size="sm"
@@ -135,13 +149,13 @@ function ProcessingInner() {
             <span className="text-xs text-slate-400 font-mono tabular-nums">{elapsed}s</span>
           </div>
         }
-        maxWidthClass="max-w-3xl"
+        maxWidthClass="max-w-6xl"
       />
 
       <PageScroll mode="scroll">
-        <PageContent width="form" className="space-y-4 max-w-3xl">
+        <PageContent width="container" className="space-y-4">
           {phase === 'error' ? (
-            <Card className="p-8 text-center border-red-200 bg-white shadow-soft-xs">
+            <Card className="p-8 text-center border-red-200 bg-white shadow-soft-xs is-shaking animate-fade-in">
               <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-red-600">
                 <AlertCircle className="h-5 w-5" />
               </div>
@@ -149,10 +163,10 @@ function ProcessingInner() {
               <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">{error}</p>
               <div className="mt-6 flex justify-center gap-2.5">
                 <Link href="/dashboard/upload">
-                  <Button size="sm">Tải lên tệp khác</Button>
+                  <Button size="md">Tải lên tệp khác</Button>
                 </Link>
                 <Link href="/dashboard/history">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="md">
                     Xem lịch sử
                   </Button>
                 </Link>
@@ -202,7 +216,7 @@ function ProcessingInner() {
                     >
                       <div className="flex items-start gap-3.5">
                         <div
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all ${
                             step.done
                               ? 'bg-emerald-100 text-emerald-700'
                               : step.active
@@ -210,13 +224,20 @@ function ProcessingInner() {
                               : 'bg-slate-100 text-slate-400'
                           }`}
                         >
-                          {step.done ? (
-                            <Check className="h-4.5 w-4.5" />
-                          ) : step.active ? (
-                            <Loader2 className="h-4.5 w-4.5 animate-spin" />
-                          ) : (
-                            <Icon className="h-4.5 w-4.5" />
-                          )}
+                          <span
+                            className="t-icon-swap"
+                            data-state={step.done ? 'b' : step.active ? 'c' : 'a'}
+                          >
+                            <span className="t-icon" data-icon="a">
+                              <Icon className="h-4.5 w-4.5" />
+                            </span>
+                            <span className="t-icon" data-icon="b">
+                              <Check className="h-4.5 w-4.5 text-emerald-700" />
+                            </span>
+                            <span className="t-icon" data-icon="c">
+                              <Loader2 className="h-4.5 w-4.5 animate-spin text-white" />
+                            </span>
+                          </span>
                         </div>
 
                         <div className="flex-1 min-w-0">

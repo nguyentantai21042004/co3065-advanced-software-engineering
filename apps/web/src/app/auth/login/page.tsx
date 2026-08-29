@@ -9,41 +9,41 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
+import { DEMO_ACCOUNT } from '@/lib/demo-account';
+import { notify } from '@/lib/notify';
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
   const [shaking, setShaking] = useState(false);
 
-  useEffect(() => {
-    if (error) {
-      setShaking(true);
-      const timer = setTimeout(() => setShaking(false), 340);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
+  function triggerShake() {
+    setShaking(true);
+    setTimeout(() => setShaking(false), 340);
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setError('');
     setPending(true);
     try {
       await login(email, password);
+      notify.success('Đăng nhập thành công', 'Chào mừng bạn quay lại hệ thống AI Coach.');
       router.push('/dashboard/upload');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Thông tin đăng nhập không chính xác.');
+      triggerShake();
+      notify.error('Đăng nhập không thành công', err);
     } finally {
       setPending(false);
     }
   }
 
   function fillSampleAccount() {
-    setEmail('demo@aicoach.local');
-    setPassword('demo123456');
-    setError('');
+    setEmail(DEMO_ACCOUNT.email);
+    setPassword(DEMO_ACCOUNT.password);
+    notify.info('Đã điền tài khoản thử nghiệm', `${DEMO_ACCOUNT.displayName} — nhấn Đăng nhập để tiếp tục.`);
   }
 
   return (
@@ -72,13 +72,6 @@ export default function LoginPage() {
             Điền nhanh
           </button>
         </div>
-
-        {error && (
-          <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-700 animate-fade-in">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </div>
-        )}
 
         <form onSubmit={onSubmit} className="space-y-3.5">
           <Input

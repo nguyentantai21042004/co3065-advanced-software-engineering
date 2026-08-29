@@ -34,6 +34,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { notify } from '@/lib/notify';
 
 function asRecord(val: unknown): Record<string, unknown> {
   return typeof val === 'object' && val !== null ? (val as Record<string, unknown>) : {};
@@ -57,7 +58,6 @@ function ResultsInner() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'coaching' | 'profile' | 'raw'>('coaching');
   const [exporting, setExporting] = useState<'pdf' | 'docx' | null>(null);
-  const [exportError, setExportError] = useState('');
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -75,6 +75,7 @@ function ResultsInner() {
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Không thể tải kết quả phân tích.');
+        notify.error('Tải báo cáo thất bại', err);
       })
       .finally(() => setLoading(false));
   }, [fileId]);
@@ -82,7 +83,6 @@ function ResultsInner() {
   async function onExport(format: 'pdf' | 'docx') {
     if (!fileId) return;
     setExporting(format);
-    setExportError('');
 
     try {
       const token = getToken();
@@ -93,7 +93,7 @@ function ResultsInner() {
       });
 
       if (!res.ok) {
-        throw new Error(`Xuất tệp thất bại (Mã phản hồi: ${res.status})`);
+        throw new Error(`Xuất tệp thất bại (Mã phản hồi HTTP: ${res.status})`);
       }
 
       const blob = await res.blob();
@@ -105,8 +105,13 @@ function ResultsInner() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
+
+      notify.success(
+        format === 'pdf' ? 'Xuất tệp PDF thành công' : 'Xuất tệp Word (.docx) thành công',
+        'Báo cáo phân tích hồ sơ đã được tải xuống máy của bạn.'
+      );
     } catch (err) {
-      setExportError(err instanceof Error ? err.message : 'Không thể tải tệp xuất ra.');
+      notify.error('Xuất tệp báo cáo thất bại', err);
     } finally {
       setExporting(null);
     }
@@ -179,42 +184,46 @@ function ResultsInner() {
           { label: candidateName },
         ]}
         title={candidateName}
-        description={`Mã hồ sơ: ${data.file_id.slice(0, 8)} · Phân loại: ${targetDomain}`}
         meta={
-          <Badge variant="brand" size="sm">
-            {targetDomain}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+              #{data.file_id.slice(0, 8)}
+            </span>
+            <Badge variant="brand" size="sm">
+              {targetDomain}
+            </Badge>
+          </div>
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="primary"
-              size="sm"
+              size="md"
               leftIcon={<FileDown className="h-4 w-4" />}
               loading={exporting === 'pdf'}
               disabled={exporting !== null || !report}
               onClick={() => void onExport('pdf')}
             >
-              Xuất file PDF
+              <span className="t-text-swap">Xuất file PDF</span>
             </Button>
             <Button
               variant="outline"
-              size="sm"
+              size="md"
               leftIcon={<FileText className="h-4 w-4 text-slate-600" />}
               loading={exporting === 'docx'}
               disabled={exporting !== null || !report}
               onClick={() => void onExport('docx')}
             >
-              Xuất tệp Word (.docx)
+              <span className="t-text-swap">Xuất tệp Word (.docx)</span>
             </Button>
           </div>
         }
-        maxWidthClass="max-w-[1280px]"
+        maxWidthClass="max-w-6xl"
       />
 
       {/* Fleet Full-Width Subnav / Tab Bar */}
       <div className="shrink-0 border-b border-[#e0e3e8] bg-white px-4 sm:px-6 py-2.5 z-10">
-        <div className="mx-auto max-w-[1280px]">
+        <div className="mx-auto max-w-6xl">
           <Tabs
             tabs={[
               { id: 'coaching', label: 'Báo cáo phản biện & Đề xuất', icon: <Target className="h-3.5 w-3.5" /> },
@@ -227,18 +236,9 @@ function ResultsInner() {
         </div>
       </div>
 
-      {exportError && (
-        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 pt-3">
-          <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{exportError}</span>
-          </div>
-        </div>
-      )}
-
       {/* PageScroll (Owns vertical scrollbar) */}
       <PageScroll mode="scroll">
-        <PageContent width="detail" className="space-y-5">
+        <PageContent width="container" className="space-y-5">
           {/* Tab 1: Coaching Report */}
           {activeTab === 'coaching' && (
             <div className="space-y-5 animate-fade-in">

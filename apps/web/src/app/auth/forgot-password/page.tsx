@@ -6,6 +6,7 @@ import { Mail, ArrowLeft, Info, CheckCircle2, Send } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { notify } from '@/lib/notify';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ export default function ForgotPasswordPage() {
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitted(true);
+    notify.success('Đã gửi yêu cầu khôi phục', `Hướng dẫn khôi phục đã được gửi tới ${email}.`);
   }
 
   return (
@@ -34,21 +36,21 @@ export default function ForgotPasswordPage() {
         </div>
 
         {submitted ? (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 text-center space-y-3">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 text-center space-y-3 animate-fade-in t-reveal">
             <CheckCircle2 className="h-5 w-5 text-emerald-600 mx-auto" />
             <p className="text-xs text-emerald-800 font-medium leading-relaxed">
               Nếu tài khoản <strong className="font-semibold">{email}</strong> tồn tại, liên kết khôi phục sẽ được gửi đi.
             </p>
             <div className="pt-1">
               <Link href="/auth/register">
-                <Button size="sm" variant="outline" className="w-full">
+                <Button size="md" variant="outline" className="w-full">
                   Tạo tài khoản mới
                 </Button>
               </Link>
             </div>
           </div>
         ) : (
-          <form onSubmit={onSubmit} className="space-y-3.5">
+          <form onSubmit={onSubmit} className="space-y-3.5 animate-fade-in">
             <Input
               label="Email tài khoản"
               type="email"
@@ -60,7 +62,7 @@ export default function ForgotPasswordPage() {
             />
 
             <Button type="submit" className="w-full" size="md" rightIcon={<Send className="h-4 w-4" />}>
-              Gửi yêu cầu khôi phục
+              <span className="t-text-swap">Gửi yêu cầu khôi phục</span>
             </Button>
           </form>
         )}

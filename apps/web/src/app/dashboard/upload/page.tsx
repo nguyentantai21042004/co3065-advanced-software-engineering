@@ -18,6 +18,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 
+import { notify } from '@/lib/notify';
+
 const ALLOWED_EXT = ['.pdf', '.docx', '.doc'];
 const MAX_BYTES = 10 * 1024 * 1024;
 
@@ -26,7 +28,6 @@ export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [status, setStatus] = useState<'idle' | 'uploading' | 'error'>('idle');
-  const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
   const [uploadStage, setUploadStage] = useState('');
   const [selectedFileName, setSelectedFileName] = useState('');
@@ -35,18 +36,17 @@ export default function UploadPage() {
     const lower = file.name.toLowerCase();
     if (!ALLOWED_EXT.some((ext) => lower.endsWith(ext))) {
       setStatus('error');
-      setError('Định dạng tệp không được hỗ trợ. Vui lòng tải lên .PDF, .DOCX hoặc .DOC');
+      notify.error('Tệp không được hỗ trợ', 'Vui lòng chọn tệp tài liệu định dạng .PDF, .DOCX hoặc .DOC.');
       return;
     }
     if (file.size > MAX_BYTES) {
       setStatus('error');
-      setError('Dung lượng tệp vượt quá giới hạn 10MB.');
+      notify.warning('Tệp vượt quá dung lượng', 'Kích thước tệp vượt quá mức cho phép tối đa 10MB.');
       return;
     }
 
     setSelectedFileName(file.name);
     setStatus('uploading');
-    setError('');
     setProgress(20);
     setUploadStage('Đang tải tài liệu lên bộ lưu trữ an toàn…');
 
@@ -61,7 +61,7 @@ export default function UploadPage() {
       });
 
       const fileId = uploaded.data?.file_id;
-      if (!fileId) throw new Error('Tải lên thành công nhưng không tìm thấy file_id.');
+      if (!fileId) throw new Error('Tải lên thành công nhưng không nhận được mã định danh file_id.');
 
       setProgress(75);
       setUploadStage('Đang bóc tách dữ liệu và tổng hợp năng lực…');
@@ -77,12 +77,14 @@ export default function UploadPage() {
         uploadedAt: uploaded.data?.uploaded_at ?? new Date().toISOString(),
       });
 
+      notify.success('Xử lý tệp thành công', `Hồ sơ "${file.name}" đã sẵn sàng để phản biện.`);
+
       setTimeout(() => {
         router.push(`/dashboard/processing?file_id=${fileId}`);
       }, 400);
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Tải lên thất bại. Vui lòng kiểm tra lại đường truyền mạng.');
+      notify.error('Tải lên hồ sơ thất bại', err);
     }
   }
 
@@ -167,16 +169,15 @@ Certifications: Certified Scrum Product Owner (CSPO), Pragmatic Institute Certif
           { label: 'Tải lên hồ sơ' },
         ]}
         title="Tải lên hồ sơ ứng viên"
-        description="Hỗ trợ các định dạng tệp PDF, Word (.docx, .doc) dung lượng tối đa 10MB."
-        maxWidthClass="max-w-4xl"
+        maxWidthClass="max-w-6xl"
       />
 
       <PageScroll mode="scroll">
-        <PageContent width="form" className="space-y-5">
+        <PageContent width="container" className="space-y-5">
           {/* Main Upload Box */}
           <Card className="p-8 shadow-soft-xs bg-white border border-slate-200">
             {status === 'uploading' ? (
-              <div className="py-8 text-center space-y-4">
+              <div className="py-8 text-center space-y-4 animate-fade-in t-reveal">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                   <Upload className="h-7 w-7 animate-bounce" />
                 </div>
@@ -255,13 +256,6 @@ Certifications: Certified Scrum Product Owner (CSPO), Pragmatic Institute Certif
                     Chọn tệp từ máy tính
                   </Button>
                 </div>
-              </div>
-            )}
-
-            {error && (
-              <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
-                <AlertCircle className="h-4 w-4 shrink-0 text-red-600 mt-0.5" />
-                <span>{error}</span>
               </div>
             )}
           </Card>

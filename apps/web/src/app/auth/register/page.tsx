@@ -9,41 +9,42 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
+import { notify } from '@/lib/notify';
+
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
   const [shaking, setShaking] = useState(false);
 
-  useEffect(() => {
-    if (error) {
-      setShaking(true);
-      const timer = setTimeout(() => setShaking(false), 340);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
+  function triggerShake() {
+    setShaking(true);
+    setTimeout(() => setShaking(false), 340);
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setError('');
     if (password.length < 8) {
-      setError('Mật khẩu cần tối thiểu 8 ký tự.');
+      triggerShake();
+      notify.warning('Mật khẩu chưa đủ điều kiện', 'Mật khẩu cần có tối thiểu 8 ký tự.');
       return;
     }
     if (password !== confirm) {
-      setError('Mật khẩu xác nhận không khớp.');
+      triggerShake();
+      notify.warning('Mật khẩu không khớp', 'Mật khẩu xác nhận không trùng khớp với mật khẩu đã nhập.');
       return;
     }
     setPending(true);
     try {
       await register(email, password);
+      notify.success('Đăng ký tài khoản thành công', 'Chào mừng bạn đến với hệ thống AI Coach.');
       router.push('/dashboard/upload');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đăng ký thất bại. Vui lòng thử lại.');
+      triggerShake();
+      notify.error('Đăng ký không thành công', err);
     } finally {
       setPending(false);
     }
@@ -54,7 +55,7 @@ export default function RegisterPage() {
     setEmail(`user${randomSuffix}@example.com`);
     setPassword('password123');
     setConfirm('password123');
-    setError('');
+    notify.info('Đã tạo tài khoản mẫu', 'Nhấn Đăng ký để tiếp tục.');
   }
 
   return (
@@ -82,13 +83,6 @@ export default function RegisterPage() {
             Sinh tài khoản mẫu
           </button>
         </div>
-
-        {error && (
-          <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-700 animate-fade-in">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </div>
-        )}
 
         <form onSubmit={onSubmit} className="space-y-3.5">
           <Input
