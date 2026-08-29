@@ -63,7 +63,7 @@ Extract text được `cleanCvText` (học từ ATS) trước khi LLM/stub; báo
 | DB | in-process Postgres via `@electric-sql/pglite` at `.data/pglite` | `DATABASE_URL` (Neon / any Postgres) |
 | Files | `.data/files` | `S3_ENDPOINT` + `S3_ACCESS_KEY_ID` + `S3_SECRET_ACCESS_KEY` + `S3_BUCKET` (+ `S3_REGION`) for R2/S3 |
 | Jobs | in-process `setImmediate` queue | none — no RabbitMQ |
-| LLM | **deterministic stub** filling structured fields **and** `coaching_report` | `GEMINI_API_KEYS` (comma-separated; still builds coaching report from text/fields) |
+| LLM | **Pollinations** by default (**no API key**) → structured fields + `coaching_report` | `LLM_PROVIDER=stub` offline; or `GEMINI_API_KEYS` + `LLM_PROVIDER=gemini` |
 | Export | PDF (`pdf-lib`) + Word/DOCX (`docx`) of the **coaching report** | none |
 
 JWT secret defaults to a local-dev value; set `JWT_SECRET` if you share the process.

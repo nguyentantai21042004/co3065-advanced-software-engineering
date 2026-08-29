@@ -21,15 +21,21 @@ async function main() {
     repos,
     storage: createStorage(cfg),
     queue: createInProcessQueue(),
-    analyzer: createAnalyzer(cfg.geminiApiKeys),
+    analyzer: createAnalyzer({
+      geminiApiKeys: cfg.geminiApiKeys,
+      provider: cfg.llmProvider,
+      pollinationsUrl: cfg.pollinationsUrl,
+      pollinationsModel: cfg.pollinationsModel,
+    }),
     extractor: createExtractor(),
   });
 
   const server = serve({ fetch: app.fetch, port: cfg.port }, (info) => {
-    const llm = cfg.geminiApiKeys.length > 0 ? 'gemini' : 'stub';
     const dbKind = cfg.databaseUrl ? 'postgres' : 'pglite';
     const files = cfg.s3 ? 's3' : 'local';
-    console.log(`AI Coach API listening on http://localhost:${info.port} (db=${dbKind} storage=${files} llm=${llm})`);
+    console.log(
+      `AI Coach API listening on http://localhost:${info.port} (db=${dbKind} storage=${files} llm=${cfg.llmProvider})`,
+    );
   });
 
   const shutdown = async () => {

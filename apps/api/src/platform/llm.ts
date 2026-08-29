@@ -21,12 +21,17 @@ export type { CvAnalysis };
 
 export interface Analyzer {
   analyze(rawText: string): Promise<CvAnalysis>;
+  readonly name: string;
 }
+
+export type LlmProviderName = 'stub' | 'gemini' | 'pollinations';
 
 const GEMINI_MODEL = 'gemini-2.0-flash';
 const MAX_CV_CHARS = 24_000;
+const DEFAULT_POLLINATIONS_URL = 'https://text.pollinations.ai/openai';
+const DEFAULT_POLLINATIONS_MODEL = 'openai';
 
-/** Prompt used when GEMINI_API_KEYS is set — keep in sync with geminiCvResponseSchema. */
+/** Prompt shared by Gemini + Pollinations — keep in sync with geminiCvResponseSchema. */
 export const ANALYSIS_PROMPT_HEADER = `Bạn là coach nghề nghiệp tại Việt Nam. Phân tích CV và trả về ĐÚNG một JSON (không markdown) với các khóa:
 basic_info (object: name, email, phone, gender 0/1/2, address, date_of_birth),
 education (array of {school_name, degree, major, graduation_date}),
@@ -122,6 +127,8 @@ export function stubAnalyze(rawText: string): CvAnalysis {
 }
 
 export class StubAnalyzer implements Analyzer {
+  readonly name = 'stub';
+
   async analyze(rawText: string): Promise<CvAnalysis> {
     return stubAnalyze(rawText);
   }
@@ -132,6 +139,43 @@ function extractJsonText(text: string): string {
   return (fenced?.[1] ?? text).trim();
 }
 
+/** Map raw LLM JSON into CvAnalysis; fall back to heuristic coaching report if needed. */
+export function analysisFromLlmJson(raw: unknown, rawText: string, fallback: CvAnalysis): CvAnalysis {
+  const parsed = geminiCvResponseSchema.parse(decodeUnicodeEscapesDeep(raw));
+
+  const basic_info = basicInfoSchema.parse({
+    ...fallback.basic_info,
+    ...parsed.basic_info,
+  });
+  const education = educationItemSchema.array().parse(parsed.education ?? []);
+  const work_experience = workExperienceItemSchema.array().parse(parsed.work_experience ?? []);
+  const skills = skillItemSchema.array().parse(parsed.skills ?? []);
+  const certificates_languages = certificatesLanguagesSchema.parse({
+    certificates: parsed.certificates_languages?.certificates ?? [],
+    languages: parsed.certificates_languages?.languages ?? [],
+  });
+
+  const reportParsed = coachingReportSchema.safeParse(parsed.coaching_report);
+  const coaching_report = reportParsed.success
+    ? reportParsed.data
+    : buildCoachingReport(rawText, {
+        basic_info,
+        education,
+        work_experience,
+        skills,
+        certificates_languages,
+      });
+
+  return packAnalysis(
+    basic_info,
+    education,
+    work_experience,
+    skills,
+    certificates_languages,
+    coaching_report,
+  );
+}
+
 type GeminiApiResponse = {
   candidates?: Array<{
     content?: {
@@ -140,7 +184,29 @@ type GeminiApiResponse = {
   }>;
 };
 
+type OpenAiChatResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string | Array<{ type?: string; text?: string }>;
+    };
+  }>;
+};
+
+function openAiMessageText(body: OpenAiChatResponse): string {
+  const content = body.choices?.[0]?.message?.content;
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => (typeof part.text === 'string' ? part.text : ''))
+      .join('')
+      .trim();
+  }
+  return '';
+}
+
 class GeminiAnalyzer implements Analyzer {
+  readonly name = 'gemini';
+
   constructor(private readonly keys: string[]) {}
 
   async analyze(rawText: string): Promise<CvAnalysis> {
@@ -150,40 +216,8 @@ class GeminiAnalyzer implements Analyzer {
 
     for (const key of this.keys) {
       try {
-        const raw = decodeUnicodeEscapesDeep(await this.call(key, prompt));
-        const parsed = geminiCvResponseSchema.parse(raw);
-
-        const basic_info = basicInfoSchema.parse({
-          ...fallback.basic_info,
-          ...parsed.basic_info,
-        });
-        const education = educationItemSchema.array().parse(parsed.education ?? []);
-        const work_experience = workExperienceItemSchema.array().parse(parsed.work_experience ?? []);
-        const skills = skillItemSchema.array().parse(parsed.skills ?? []);
-        const certificates_languages = certificatesLanguagesSchema.parse({
-          certificates: parsed.certificates_languages?.certificates ?? [],
-          languages: parsed.certificates_languages?.languages ?? [],
-        });
-
-        const reportParsed = coachingReportSchema.safeParse(parsed.coaching_report);
-        const coaching_report = reportParsed.success
-          ? reportParsed.data
-          : buildCoachingReport(rawText, {
-              basic_info,
-              education,
-              work_experience,
-              skills,
-              certificates_languages,
-            });
-
-        return packAnalysis(
-          basic_info,
-          education,
-          work_experience,
-          skills,
-          certificates_languages,
-          coaching_report,
-        );
+        const raw = await this.call(key, prompt);
+        return analysisFromLlmJson(raw, rawText, fallback);
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
       }
@@ -212,7 +246,78 @@ class GeminiAnalyzer implements Analyzer {
   }
 }
 
-export function createAnalyzer(keys: string[]): Analyzer {
-  if (keys.length > 0) return new GeminiAnalyzer(keys);
-  return new StubAnalyzer();
+/** Free, no-API-key OpenAI-compatible endpoint (Pollinations). */
+class PollinationsAnalyzer implements Analyzer {
+  readonly name = 'pollinations';
+
+  constructor(
+    private readonly baseUrl: string,
+    private readonly model: string,
+  ) {}
+
+  async analyze(rawText: string): Promise<CvAnalysis> {
+    const fallback = stubAnalyze(rawText);
+    try {
+      const raw = await this.call(buildAnalysisPrompt(rawText));
+      return analysisFromLlmJson(raw, rawText, fallback);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn('pollinations analysis failed; using stub', message);
+      return fallback;
+    }
+  }
+
+  private async call(prompt: string): Promise<unknown> {
+    const res = await fetch(this.baseUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.2,
+      }),
+    });
+    if (!res.ok) throw new Error(`pollinations http ${res.status}`);
+
+    const body = (await res.json()) as OpenAiChatResponse;
+    const text = openAiMessageText(body);
+    if (!text) throw new Error('empty pollinations response');
+    return JSON.parse(extractJsonText(text)) as unknown;
+  }
+}
+
+export interface CreateAnalyzerOptions {
+  geminiApiKeys?: string[];
+  /** stub | gemini | pollinations — default: gemini if keys else pollinations */
+  provider?: LlmProviderName;
+  pollinationsUrl?: string;
+  pollinationsModel?: string;
+}
+
+export function createAnalyzer(options: CreateAnalyzerOptions | string[] = {}): Analyzer {
+  const opts: CreateAnalyzerOptions = Array.isArray(options)
+    ? { geminiApiKeys: options }
+    : options;
+
+  const keys = opts.geminiApiKeys ?? [];
+  const provider =
+    opts.provider ??
+    (keys.length > 0 ? 'gemini' : 'pollinations');
+
+  if (provider === 'stub') return new StubAnalyzer();
+  if (provider === 'gemini') {
+    if (keys.length === 0) {
+      console.warn('LLM_PROVIDER=gemini but no GEMINI_API_KEYS; falling back to pollinations');
+      return new PollinationsAnalyzer(
+        opts.pollinationsUrl ?? DEFAULT_POLLINATIONS_URL,
+        opts.pollinationsModel ?? DEFAULT_POLLINATIONS_MODEL,
+      );
+    }
+    return new GeminiAnalyzer(keys);
+  }
+
+  return new PollinationsAnalyzer(
+    opts.pollinationsUrl ?? DEFAULT_POLLINATIONS_URL,
+    opts.pollinationsModel ?? DEFAULT_POLLINATIONS_MODEL,
+  );
 }

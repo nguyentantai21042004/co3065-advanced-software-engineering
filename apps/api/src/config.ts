@@ -9,12 +9,18 @@ export interface S3Config {
   region: string;
 }
 
+export type LlmProvider = 'stub' | 'gemini' | 'pollinations';
+
 export interface Config {
   port: number;
   jwtSecret: string;
   dataDir: string;
   databaseUrl?: string;
   geminiApiKeys: string[];
+  /** Default: gemini if keys exist, else pollinations (no key). */
+  llmProvider: LlmProvider;
+  pollinationsUrl: string;
+  pollinationsModel: string;
   s3?: S3Config;
 }
 
@@ -42,12 +48,24 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
         }
       : undefined;
 
+  const geminiApiKeys = csv(env.GEMINI_API_KEYS);
+  const rawProvider = (env.LLM_PROVIDER ?? '').trim().toLowerCase();
+  const llmProvider: LlmProvider =
+    rawProvider === 'stub' || rawProvider === 'gemini' || rawProvider === 'pollinations'
+      ? rawProvider
+      : geminiApiKeys.length > 0
+        ? 'gemini'
+        : 'pollinations';
+
   return {
     port: Number(env.PORT ?? 8090),
     jwtSecret: env.JWT_SECRET ?? 'dev-insecure-jwt-secret',
     dataDir,
     databaseUrl: env.DATABASE_URL || undefined,
-    geminiApiKeys: csv(env.GEMINI_API_KEYS),
+    geminiApiKeys,
+    llmProvider,
+    pollinationsUrl: env.POLLINATIONS_URL ?? 'https://text.pollinations.ai/openai',
+    pollinationsModel: env.POLLINATIONS_MODEL ?? 'openai',
     s3,
   };
 }
