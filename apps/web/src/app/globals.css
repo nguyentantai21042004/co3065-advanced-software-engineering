@@ -1,11 +1,241 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
+@layer base {
+  :root {
+    color-scheme: light;
+
+    /* Jakub Antalík / transitions.dev design tokens */
+    --tabs-dur: 260ms;
+    --tabs-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --tabs-bar-bg: #f1f5f9;
+    --tabs-pill-bg: #ffffff;
+    --tabs-text-muted: #64748b;
+    --tabs-text-active: #0f172a;
+
+    --text-swap-dur: 180ms;
+    --text-swap-translate-y: 4px;
+    --text-swap-blur: 2px;
+    --text-swap-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+    --icon-swap-dur: 200ms;
+    --icon-swap-blur: 2px;
+    --icon-swap-start-scale: 0.5;
+    --icon-swap-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+    --shake-distance: 6px;
+    --shake-overshoot: 4px;
+    --shake-dur: 320ms;
+    --shake-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+    --reveal-dur: 320ms;
+    --reveal-blur: 3px;
+    --reveal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html,
+  body {
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    @apply bg-slate-50/80 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900;
+    min-height: 100vh;
+  }
+
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-feature-settings: "tnum";
+  }
 }
 
-body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+/* Subtle clean grid pattern for hero */
+.bg-hero-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(226, 232, 240, 0.45) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(226, 232, 240, 0.45) 1px, transparent 1px);
+}
+
+/* =========================================================================
+   Jakub Antalík / transitions.dev — Reusable System Transitions Convention
+   ========================================================================= */
+
+/* 1. Sliding Segmented Tabs (tabs-sliding) */
+.t-tabs {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--tabs-bar-bg);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.t-tabs-pill {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  background: var(--tabs-pill-bg);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  transform: translateX(0);
+  transition:
+    transform var(--tabs-dur) var(--tabs-ease),
+    width var(--tabs-dur) var(--tabs-ease);
+  will-change: transform, width;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.t-tab {
+  position: relative;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 6px 14px;
+  color: var(--tabs-text-muted);
+  cursor: pointer;
+  border-radius: 8px;
+  z-index: 1;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color var(--tabs-dur) var(--tabs-ease);
+  user-select: none;
+}
+
+.t-tab:not([aria-selected="true"]):hover,
+.t-tab[aria-selected="true"] {
+  color: var(--tabs-text-active);
+}
+
+.t-tab[aria-selected="true"] {
+  font-weight: 600;
+}
+
+/* 2. Text States Swap (text-states-swap) */
+.t-text-swap {
+  display: inline-block;
+  transform: translateY(0);
+  filter: blur(0);
+  opacity: 1;
+  transition:
+    transform var(--text-swap-dur) var(--text-swap-ease),
+    filter    var(--text-swap-dur) var(--text-swap-ease),
+    opacity   var(--text-swap-dur) var(--text-swap-ease);
+  will-change: transform, filter, opacity;
+}
+.t-text-swap.is-exit {
+  transform: translateY(calc(var(--text-swap-translate-y) * -1));
+  filter: blur(var(--text-swap-blur));
+  opacity: 0;
+}
+.t-text-swap.is-enter-start {
+  transform: translateY(var(--text-swap-translate-y));
+  filter: blur(var(--text-swap-blur));
+  opacity: 0;
+  transition: none;
+}
+
+/* 3. Icon Swap (icon-swap) */
+.t-icon-swap {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+.t-icon-swap .t-icon {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    opacity   var(--icon-swap-dur) var(--icon-swap-ease),
+    filter    var(--icon-swap-dur) var(--icon-swap-ease),
+    transform var(--icon-swap-dur) var(--icon-swap-ease);
+  will-change: opacity, filter, transform;
+}
+.t-icon-swap[data-state="a"] .t-icon[data-icon="a"],
+.t-icon-swap[data-state="b"] .t-icon[data-icon="b"] {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+  pointer-events: auto;
+}
+.t-icon-swap[data-state="a"] .t-icon[data-icon="b"],
+.t-icon-swap[data-state="b"] .t-icon[data-icon="a"] {
+  opacity: 0;
+  filter: blur(var(--icon-swap-blur));
+  transform: scale(var(--icon-swap-start-scale));
+  pointer-events: none;
+}
+
+/* 4. Error State Shake (error-state-shake) */
+@keyframes t-shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(calc(var(--shake-distance) * -1)); }
+  40% { transform: translateX(var(--shake-distance)); }
+  60% { transform: translateX(calc(var(--shake-overshoot) * -1)); }
+  80% { transform: translateX(var(--shake-overshoot)); }
+  100% { transform: translateX(0); }
+}
+
+.is-shaking {
+  animation: t-shake var(--shake-dur) var(--shake-ease);
+}
+
+/* 5. Smooth Skeleton & Reveal (skeleton-reveal) */
+.t-reveal {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0);
+  transition:
+    opacity var(--reveal-dur) var(--reveal-ease),
+    filter var(--reveal-dur) var(--reveal-ease),
+    transform var(--reveal-dur) var(--reveal-ease);
+}
+.t-reveal-hidden {
+  opacity: 0;
+  filter: blur(var(--reveal-blur));
+  transform: translateY(3px);
+  pointer-events: none;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .t-tabs-pill,
+  .t-tab,
+  .t-text-swap,
+  .t-icon-swap .t-icon,
+  .t-reveal,
+  .is-shaking {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Modern smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
