@@ -22,6 +22,7 @@ import {
   Copy,
   Check,
   ChevronRight,
+  ChevronDown,
   TrendingUp,
   MapPin,
   Mail,
@@ -58,6 +59,7 @@ function ResultsInner() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'coaching' | 'profile' | 'raw'>('coaching');
   const [exporting, setExporting] = useState<'pdf' | 'docx' | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -82,6 +84,7 @@ function ResultsInner() {
 
   async function onExport(format: 'pdf' | 'docx') {
     if (!fileId) return;
+    setExportOpen(false);
     setExporting(format);
 
     try {
@@ -195,27 +198,53 @@ function ResultsInner() {
           </div>
         }
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
             <Button
               variant="primary"
               size="md"
               leftIcon={<FileDown className="h-4 w-4" />}
-              loading={exporting === 'pdf'}
+              rightIcon={<ChevronDown className="h-4 w-4" />}
+              loading={exporting !== null}
               disabled={exporting !== null || !report}
-              onClick={() => void onExport('pdf')}
+              onClick={() => setExportOpen((open) => !open)}
+              aria-expanded={exportOpen}
+              aria-haspopup="menu"
             >
-              <span className="t-text-swap">Xuất file PDF</span>
+              Xuất file
             </Button>
-            <Button
-              variant="outline"
-              size="md"
-              leftIcon={<FileText className="h-4 w-4 text-slate-600" />}
-              loading={exporting === 'docx'}
-              disabled={exporting !== null || !report}
-              onClick={() => void onExport('docx')}
-            >
-              <span className="t-text-swap">Xuất tệp Word (.docx)</span>
-            </Button>
+            {exportOpen && (
+              <>
+                <button
+                  type="button"
+                  className="fixed inset-0 z-40 cursor-default"
+                  aria-label="Đóng menu xuất file"
+                  onClick={() => setExportOpen(false)}
+                />
+                <div
+                  role="menu"
+                  className="absolute right-0 z-50 mt-1.5 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-soft-md"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-medium text-slate-800 hover:bg-slate-50"
+                    onClick={() => void onExport('pdf')}
+                  >
+                    <FileDown className="h-3.5 w-3.5 text-slate-500" />
+                    PDF — báo cáo coaching
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-medium text-slate-800 hover:bg-slate-50"
+                    onClick={() => void onExport('docx')}
+                  >
+                    <FileText className="h-3.5 w-3.5 text-slate-500" />
+                    Word (.docx)
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         }
         maxWidthClass="max-w-6xl"
@@ -273,26 +302,24 @@ function ResultsInner() {
                     </div>
                   </Card>
 
-                  {/* Strengths & Gaps Bento Grid */}
+                  <Card className="p-4 border border-slate-200 bg-slate-50/70 shadow-soft-xs">
+                    <p className="text-xs text-slate-700 leading-relaxed">
+                      <span className="font-semibold text-slate-900">Nhận xét nội dung: </span>
+                      {report.experience_comments.summary}
+                    </p>
+                  </Card>
+
                   <div className="grid md:grid-cols-2 gap-5">
-                    {/* Strengths */}
                     <Card className="p-5 sm:p-6 border border-emerald-200/80 bg-white shadow-soft-xs">
                       <div className="flex items-center gap-2.5 mb-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                           <CheckCircle2 className="h-4.5 w-4.5" />
                         </div>
                         <div>
-                          <h3 className="text-sm font-bold text-emerald-950">
-                            Điểm mạnh nổi bật
-                          </h3>
-                          <p className="text-xs text-slate-500">Các năng lực có tính cạnh tranh cao</p>
+                          <h3 className="text-sm font-bold text-emerald-950">Điểm mạnh nội dung</h3>
+                          <p className="text-xs text-slate-500">Tín hiệu tích cực từ kinh nghiệm / dự án</p>
                         </div>
                       </div>
-
-                      <p className="text-xs text-slate-600 leading-relaxed mb-4">
-                        {report.experience_comments.summary}
-                      </p>
-
                       <ul className="space-y-2.5">
                         {report.experience_comments.strengths.map((item, idx) => (
                           <li
@@ -306,24 +333,16 @@ function ResultsInner() {
                       </ul>
                     </Card>
 
-                    {/* Gaps / Growth Areas */}
                     <Card className="p-5 sm:p-6 border border-amber-200/80 bg-white shadow-soft-xs">
                       <div className="flex items-center gap-2.5 mb-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
                           <AlertCircle className="h-4.5 w-4.5" />
                         </div>
                         <div>
-                          <h3 className="text-sm font-bold text-amber-950">
-                            Điểm cần hoàn thiện
-                          </h3>
-                          <p className="text-xs text-slate-500">Các tín hiệu thiếu hụt hoặc chưa định lượng</p>
+                          <h3 className="text-sm font-bold text-amber-950">Nội dung cần làm giàu</h3>
+                          <p className="text-xs text-slate-500">Ưu tiên bổ sung trước khi chỉnh format</p>
                         </div>
                       </div>
-
-                      <p className="text-xs text-slate-600 leading-relaxed mb-4">
-                        Những khía cạnh cần củng cố để phù hợp hơn với các vai trò cấp cao:
-                      </p>
-
                       <ul className="space-y-2.5">
                         {report.experience_comments.gaps.map((item, idx) => (
                           <li

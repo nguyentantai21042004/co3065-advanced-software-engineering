@@ -1,0 +1,31 @@
+Jordan Lee
+jordan.lee@example.com • +1 (415) 555-0198 • San Francisco, CA
+linkedin.com/in/jordanlee
+
+SUMMARY
+Backend Engineer with 4+ years building Golang and Node.js microservices in production.
+Shipped APIs serving 2M+ monthly requests; reduced p95 latency 35% on payment workflows.
+
+EXPERIENCE
+Jan 2022 - Present  Acme Payments Inc. - Senior Backend Engineer
+Led redesign of settlement microservice (Golang, Gin, PostgreSQL, RabbitMQ).
+Owned Kubernetes deployment and CI/CD (Jenkins, Docker); cut incident MTTR by 40%.
+Delivered partner CSV export pipeline used by 12 enterprise clients.
+
+Jun 2019 - Dec 2021  Nova Robotics - Backend Developer
+Built MQTT dispatcher bridging robot fleets to operator commands (AWS IoT, Redis Pub/Sub).
+Implemented idempotent command queue with retry and dead-letter handling.
+
+PROJECTS
+SMAP – Social Media Analytics Platform
+Microservices on Kubernetes with RabbitMQ, Redis, PostgreSQL, MinIO; live demo smap.example.dev
+Kanban Task Board – Golang + Next.js + WebSocket realtime sync
+
+SKILLS
+Golang, Gin, TypeScript, Node.js, FastAPI, PostgreSQL, MongoDB, Redis, RabbitMQ
+Kubernetes, Docker, Jenkins, AWS (EC2, S3, IAM, VPC), Terraform
+
+EDUCATION
+University of California, Berkeley
+Bachelor of Science, Computer Science
+Sep 2015 - May 2019

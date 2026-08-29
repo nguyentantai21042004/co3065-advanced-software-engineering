@@ -66,7 +66,10 @@ function ProcessingInner() {
         const data = res.data;
         if (data?.analysis_result || data?.coaching_report || data?.basic_info) {
           setPhase('done');
-          notify.success('Hoàn tất phân tích', 'Báo cáo năng lực và phản biện đã sẵn sàng.');
+          notify.success('Hoàn tất phân tích', 'Đang chuyển sang báo cáo kết quả…');
+          redirectTimer = window.setTimeout(() => {
+            if (!cancelled) router.replace(`/dashboard/results?file_id=${fileId}`);
+          }, 450);
           return;
         }
         if (data?.raw_text) {
@@ -89,13 +92,15 @@ function ProcessingInner() {
     }
 
     let timer = window.setTimeout(() => void tick(), 250);
+    let redirectTimer = 0;
 
     return () => {
       cancelled = true;
       clearInterval(intervalTimer);
       window.clearTimeout(timer);
+      window.clearTimeout(redirectTimer);
     };
-  }, [fileId]);
+  }, [fileId, router]);
 
   const steps = [
     {

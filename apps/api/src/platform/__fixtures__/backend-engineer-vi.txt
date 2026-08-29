@@ -1,0 +1,34 @@
+NGUYỄN VĂN AN
+nguyenvanan@example.com • 0901234567 • TP. Hồ Chí Minh
+Portfolio: an.dev.vn
+
+TÓM TẮT
+Kỹ sư phần mềm backend 3 năm kinh nghiệm với Golang (Gin) và Python (FastAPI).
+Triển khai microservice trên Kubernetes; giảm thời gian xử lý batch 30% cho hệ thống HRM.
+
+KINH NGHIỆM
+Aug 2023 - Present ABC Technology JSC - Backend Developer
+Phát triển microservice Golang (Gin) phục vụ API chấm công và nghỉ phép theo quy định lao động Việt Nam.
+Thiết kế Talent Management service, sinh ma trận nhân tài và gợi ý lộ trình nghề nghiệp.
+Tích hợp xuất CSV cho đối tác doanh nghiệp; cắt thời gian đối soát thủ công 30%.
+
+Jan 2022 - Jul 2023 Robot Viet Nam Co.,LTD - Backend Engineer
+Xây lớp MQTT kết nối robot fleet với hệ thống điều khiển; hỗ trợ AWS, Redis Pub/Sub.
+Đánh giá ROS 2 làm phương án thay thế cho Redis trong trao đổi lệnh.
+
+DỰ ÁN
+SMAP – Nền tảng phân tích mạng xã hội phân tán
+Kiến trúc microservice + event-driven trên Kubernetes; RabbitMQ, PostgreSQL, MinIO.
+KANBAN – Quản lý công việc realtime (Golang + Next.js + WebSocket)
+
+KỸ NĂNG
+Golang, Gin, TypeScript, FastAPI, Spring Boot, PostgreSQL, MongoDB, Redis, RabbitMQ
+Kubernetes, Docker, Jenkins, AWS (EC2, S3, IAM), Terraform, Nginx
+
+HỌC VẤN
+Ho Chi Minh City University of Technology (HCMUT)
+Bachelor of Engineering, Computer Science
+Sep 2019 - May 2023 Hồ Chí Minh, Việt Nam
+
+CHỨNG CHỈ
+TOEIC Score: 850

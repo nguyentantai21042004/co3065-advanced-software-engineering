@@ -16,6 +16,7 @@ import {
 } from '../contracts/cv.js';
 import { buildCoachingReport } from './coaching-report.js';
 import { decodeUnicodeEscapesDeep } from './cv-text.js';
+import { heuristicExtractCv, mergeStructuredCv } from './heuristic-cv.js';
 
 export type { CvAnalysis };
 
@@ -50,32 +51,14 @@ Yêu cầu:
 - domain ngắn gọn (vd "Kỹ thuật phần mềm").
 - job_titles có thể giữ tên tiếng Anh phổ biến trên JD VN.
 - Không bịa kinh nghiệm không có trong CV.
+- recommendations ưu tiên LÀM GIÀU NỘI DUNG (tóm tắt nghề nghiệp, bullet thành tựu có số liệu, case study dự án, gắn skill với bằng chứng). Chỉ tối đa 1 ý về format/ATS và đặt cuối danh sách.
+- experience_comments.strengths/gaps nói về chất lượng nội dung kinh nghiệm/dự án, không chỉ bố cục.
 
 CV text:
 `;
 
 function buildAnalysisPrompt(rawText: string): string {
   return `${ANALYSIS_PROMPT_HEADER}${rawText.slice(0, MAX_CV_CHARS)}`;
-}
-
-function pickEmail(text: string): string {
-  return text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? '';
-}
-
-function pickPhone(text: string): string {
-  return text.match(/(?:\+?\d[\d\s().-]{7,}\d)/)?.[0]?.replace(/\s+/g, '') ?? '';
-}
-
-function pickName(text: string): string {
-  const line = text
-    .split('\n')
-    .map((row) => row.trim())
-    .find((row) => row && !row.includes('@') && !/^\d/.test(row));
-  return (line ?? 'Ứng viên').slice(0, 120);
-}
-
-function emptyCerts(): CertificatesLanguages {
-  return { certificates: [], languages: [] };
 }
 
 function packAnalysis(
@@ -96,32 +79,16 @@ function packAnalysis(
   };
 }
 
+/** stubAnalyze uses local heuristics so profile tab stays useful when LLM is down. */
 export function stubAnalyze(rawText: string): CvAnalysis {
-  const basic_info = basicInfoSchema.parse({
-    name: pickName(rawText),
-    email: pickEmail(rawText),
-    phone: pickPhone(rawText),
-    gender: 2,
-    address: '',
-    date_of_birth: '',
-  });
-  const education: EducationItem[] = [];
-  const work_experience: WorkExperienceItem[] = [];
-  const skills: SkillItem[] = [];
-  const certificates_languages = emptyCerts();
-  const coaching_report = buildCoachingReport(rawText, {
-    basic_info,
-    education,
-    work_experience,
-    skills,
-    certificates_languages,
-  });
+  const extracted = heuristicExtractCv(rawText);
+  const coaching_report = buildCoachingReport(rawText, extracted);
   return packAnalysis(
-    basic_info,
-    education,
-    work_experience,
-    skills,
-    certificates_languages,
+    extracted.basic_info,
+    extracted.education,
+    extracted.work_experience,
+    extracted.skills,
+    extracted.certificates_languages,
     coaching_report,
   );
 }
@@ -139,39 +106,51 @@ function extractJsonText(text: string): string {
   return (fenced?.[1] ?? text).trim();
 }
 
-/** Map raw LLM JSON into CvAnalysis; fall back to heuristic coaching report if needed. */
+/** Map raw LLM JSON into CvAnalysis; fill empty structured fields from heuristic extract. */
 export function analysisFromLlmJson(raw: unknown, rawText: string, fallback: CvAnalysis): CvAnalysis {
   const parsed = geminiCvResponseSchema.parse(decodeUnicodeEscapesDeep(raw));
+  const heuristic = heuristicExtractCv(rawText);
 
-  const basic_info = basicInfoSchema.parse({
-    ...fallback.basic_info,
-    ...parsed.basic_info,
-  });
-  const education = educationItemSchema.array().parse(parsed.education ?? []);
-  const work_experience = workExperienceItemSchema.array().parse(parsed.work_experience ?? []);
-  const skills = skillItemSchema.array().parse(parsed.skills ?? []);
-  const certificates_languages = certificatesLanguagesSchema.parse({
-    certificates: parsed.certificates_languages?.certificates ?? [],
-    languages: parsed.certificates_languages?.languages ?? [],
-  });
+  const merged = mergeStructuredCv(
+    {
+      basic_info: basicInfoSchema.parse({
+        ...fallback.basic_info,
+        ...parsed.basic_info,
+      }),
+      education: educationItemSchema.array().parse(parsed.education ?? []),
+      work_experience: workExperienceItemSchema.array().parse(parsed.work_experience ?? []),
+      skills: skillItemSchema.array().parse(parsed.skills ?? []),
+      certificates_languages: certificatesLanguagesSchema.parse({
+        certificates: parsed.certificates_languages?.certificates ?? [],
+        languages: parsed.certificates_languages?.languages ?? [],
+      }),
+    },
+    {
+      basic_info: heuristic.basic_info,
+      education: heuristic.education.length ? heuristic.education : fallback.education,
+      work_experience: heuristic.work_experience.length
+        ? heuristic.work_experience
+        : fallback.work_experience,
+      skills: heuristic.skills.length ? heuristic.skills : fallback.skills,
+      certificates_languages:
+        (heuristic.certificates_languages.certificates?.length ?? 0) > 0 ||
+        (heuristic.certificates_languages.languages?.length ?? 0) > 0
+          ? heuristic.certificates_languages
+          : fallback.certificates_languages,
+    },
+  );
 
   const reportParsed = coachingReportSchema.safeParse(parsed.coaching_report);
   const coaching_report = reportParsed.success
     ? reportParsed.data
-    : buildCoachingReport(rawText, {
-        basic_info,
-        education,
-        work_experience,
-        skills,
-        certificates_languages,
-      });
+    : buildCoachingReport(rawText, merged);
 
   return packAnalysis(
-    basic_info,
-    education,
-    work_experience,
-    skills,
-    certificates_languages,
+    merged.basic_info,
+    merged.education,
+    merged.work_experience,
+    merged.skills,
+    merged.certificates_languages,
     coaching_report,
   );
 }
