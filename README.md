@@ -10,7 +10,7 @@ Requires **Node ≥ 20** and **pnpm 10.x**. No Docker.
 
 ```bash
 pnpm install
-cp .env.example .env   # optional; defaults already boot locally
+cp .env.example .env   # fill DATABASE_URL + S3_* (required to boot API)
 pnpm dev
 ```
 
@@ -56,17 +56,17 @@ Handlers own the Hono context `c`. Services take plain arguments. Repos own SQL.
 
 Extract text được `cleanCvText` (học từ ATS) trước khi LLM/stub; báo cáo stub/LLM mặc định **tiếng Việt**.
 
-## Infra (local / free-tier)
+## Infra (required cloud config)
 
-| Concern | Default | Optional env |
+| Concern | Required | Notes |
 | --- | --- | --- |
-| DB | in-process Postgres via `@electric-sql/pglite` at `.data/pglite` | `DATABASE_URL` (Neon / any Postgres) |
-| Files | `.data/files` | `S3_ENDPOINT` + `S3_ACCESS_KEY_ID` + `S3_SECRET_ACCESS_KEY` + `S3_BUCKET` (+ `S3_REGION`) for R2/S3 |
-| Jobs | in-process `setImmediate` queue | none — no RabbitMQ |
-| LLM | **Pollinations** by default (**no API key**) → structured fields + `coaching_report` | `LLM_PROVIDER=stub` offline; or `GEMINI_API_KEYS` + `LLM_PROVIDER=gemini` |
-| Export | PDF (`pdf-lib`) + Word/DOCX (`docx`) of the **coaching report** | none |
+| DB | `DATABASE_URL` (Neon/Postgres) | No PGlite fallback at runtime |
+| Files | `S3_ENDPOINT` + `S3_ACCESS_KEY_ID` + `S3_SECRET_ACCESS_KEY` + `S3_BUCKET` | Cloudflare R2 free tier recommended |
+| Jobs | in-process `setImmediate` queue | No Redis/RabbitMQ |
+| LLM | Pollinations by default (no key) | `LLM_PROVIDER=stub` or optional `GEMINI_API_KEYS` |
+| Export | PDF (`pdf-lib`) + Word (`docx`) | Coaching report, not original CV |
 
-JWT secret defaults to a local-dev value; set `JWT_SECRET` if you share the process.
+API **refuses to boot** if `DATABASE_URL` or any `S3_*` is missing. Set `JWT_SECRET` when sharing the process.
 
 ## HTTP envelope
 

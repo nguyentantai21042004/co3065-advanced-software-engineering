@@ -159,8 +159,9 @@ export async function openDatabase(opts: OpenDatabaseOpts): Promise<Sql> {
   return wrapPglite(db);
 }
 
-export async function openDatabaseFromConfig(cfg: Config, inMemory = false): Promise<Sql> {
-  return openDatabase({ databaseUrl: cfg.databaseUrl, dataDir: cfg.dataDir, inMemory });
+/** Open the configured Postgres/Neon database (runtime — no PGlite fallback). */
+export async function openDatabaseFromConfig(cfg: Config): Promise<Sql> {
+  return openDatabase({ databaseUrl: cfg.databaseUrl, dataDir: cfg.dataDir });
 }
 
 export async function migrate(db: Sql): Promise<void> {

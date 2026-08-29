@@ -69,11 +69,12 @@ class S3Storage implements FileStorage {
   }
 }
 
+/** Runtime storage: always S3/R2 from required config. */
 export function createStorage(cfg: Config): FileStorage {
-  if (cfg.s3) return new S3Storage(cfg.s3);
-  return new LocalStorage(join(cfg.dataDir, 'files'));
+  return new S3Storage(cfg.s3);
 }
 
+/** Test-only local filesystem storage (vitest). */
 export function createLocalStorage(root: string): FileStorage {
   return new LocalStorage(root);
 }

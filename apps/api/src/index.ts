@@ -31,10 +31,8 @@ async function main() {
   });
 
   const server = serve({ fetch: app.fetch, port: cfg.port }, (info) => {
-    const dbKind = cfg.databaseUrl ? 'postgres' : 'pglite';
-    const files = cfg.s3 ? 's3' : 'local';
     console.log(
-      `AI Coach API listening on http://localhost:${info.port} (db=${dbKind} storage=${files} llm=${cfg.llmProvider})`,
+      `AI Coach API listening on http://localhost:${info.port} (db=postgres storage=s3/${cfg.s3.bucket} llm=${cfg.llmProvider})`,
     );
   });
 

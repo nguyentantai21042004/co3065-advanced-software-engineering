@@ -43,6 +43,12 @@ describe('HTTP contracts', () => {
       JWT_SECRET: 'test-jwt-secret',
       DATA_DIR: dataDir,
       PORT: '8090',
+      DATABASE_URL: 'postgres://test:test@127.0.0.1:5432/test',
+      S3_ENDPOINT: 'http://127.0.0.1:9000',
+      S3_ACCESS_KEY_ID: 'test',
+      S3_SECRET_ACCESS_KEY: 'test',
+      S3_BUCKET: 'test',
+      LLM_PROVIDER: 'stub',
     });
     app = buildApp({
       cfg,
