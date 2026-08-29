@@ -1,0 +1,23 @@
+{
+  "name": "aicoach",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI Coach — CV upload, extract, and analysis demo (CO3065)",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "build": "turbo run build",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.42",
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.2"
+  }
+}

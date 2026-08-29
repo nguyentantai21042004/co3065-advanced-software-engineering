@@ -1,2 +1,13 @@
-.idea
-.vscode
+node_modules
+.turbo
+.next
+dist
+coverage
+.data
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+tsconfig.tsbuildinfo
+*.tsbuildinfo
