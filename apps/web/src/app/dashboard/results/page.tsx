@@ -62,6 +62,7 @@ function ResultsInner() {
   const [exporting, setExporting] = useState<'pdf' | 'docx' | null>(null);
   const [exportError, setExportError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [pinMsg, setPinMsg] = useState('');
 
   useEffect(() => {
     if (!fileId) {
@@ -120,6 +121,24 @@ function ResultsInner() {
     navigator.clipboard.writeText(data.raw_text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function pinAdvice(body: string, section: 'recommendations' | 'format_critique' | 'experience_comments') {
+    setPinMsg('');
+    try {
+      await api('/advice/pins', {
+        method: 'POST',
+        body: JSON.stringify({
+          body,
+          section,
+          file_id: fileId || undefined,
+        }),
+      });
+      setPinMsg('Đã ghim vào sổ lời khuyên.');
+      setTimeout(() => setPinMsg(''), 2500);
+    } catch (err) {
+      setPinMsg(err instanceof Error ? err.message : 'Ghim thất bại');
+    }
   }
 
   if (loading) {
@@ -401,6 +420,7 @@ function ResultsInner() {
                   </div>
                 </div>
 
+                {pinMsg && <p className="mb-3 text-xs text-blue-700">{pinMsg}</p>}
                 <div className="space-y-2.5">
                   {report.recommendations.map((rec, idx) => (
                     <div
@@ -410,9 +430,21 @@ function ResultsInner() {
                       <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-900 text-xs font-bold text-white">
                         {idx + 1}
                       </div>
-                      <p className="text-xs text-slate-800 leading-relaxed pt-0.5">{rec}</p>
+                      <p className="flex-1 text-xs text-slate-800 leading-relaxed pt-0.5">{rec}</p>
+                      <button
+                        type="button"
+                        onClick={() => void pinAdvice(rec, 'recommendations')}
+                        className="shrink-0 rounded-md border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
+                      >
+                        Ghim
+                      </button>
                     </div>
                   ))}
+                </div>
+                <div className="mt-4">
+                  <Link href="/dashboard/advice" className="text-xs font-medium text-blue-600 hover:underline">
+                    Xem sổ lời khuyên &amp; so sánh các lần →
+                  </Link>
                 </div>
               </Card>
             </>

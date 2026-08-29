@@ -43,15 +43,15 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-slate-50/70 text-slate-900 flex flex-col font-sans">
       {/* Top Header */}
-      <header className="sticky top-0 z-30 h-15 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
+      <header className="sticky top-0 z-30 h-[72px] sm:h-20 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8.5 w-8.5 items-center justify-center rounded-xl bg-slate-900 text-white shadow-soft-xs">
-              <Compass className="h-4.5 w-4.5" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-soft-xs">
+              <Compass className="h-5 w-5" />
             </div>
             <div>
-              <span className="text-sm font-bold tracking-tight text-slate-900">AI Coach</span>
-              <p className="text-[10px] text-slate-500 font-medium leading-none mt-0.5">Career Studio</p>
+              <span className="text-base font-bold tracking-tight text-slate-900">AI Coach</span>
+              <p className="text-[11px] text-slate-500 font-medium leading-none mt-0.5">Career Studio</p>
             </div>
           </div>
 
