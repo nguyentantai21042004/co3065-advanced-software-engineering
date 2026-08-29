@@ -5,7 +5,7 @@ import { badRequest } from '../../platform/errors.js';
 import { ok } from '../../platform/response.js';
 import { validateParams } from '../../platform/validate.js';
 import { fileIdParamsSchema } from './contract.js';
-import { CvService } from './service.js';
+import { CvService, type ExportFormat } from './service.js';
 
 async function readUpload(c: AppContext): Promise<{ fileName: string; contentType: string; size: number; bytes: Buffer }> {
   const body = await c.req.parseBody({ all: true });
@@ -44,5 +44,17 @@ export function cvHandlers(ctx: RouteCtx) {
       const data = await service.list(c.get('email'));
       return ok(c, 'Success', data);
     },
+    exportPdf: async (c: AppContext) => exportBinary(c, service, 'pdf'),
+    exportDocx: async (c: AppContext) => exportBinary(c, service, 'docx'),
   };
+}
+
+async function exportBinary(c: AppContext, service: CvService, format: ExportFormat) {
+  const { file_id } = validateParams(c, fileIdParamsSchema);
+  const exported = await service.exportReport(file_id, c.get('email'), format);
+  c.header('Content-Type', exported.contentType);
+  c.header('Content-Disposition', `attachment; filename="${exported.fileName}"`);
+  c.header('Content-Length', String(exported.bytes.byteLength));
+  c.header('Cache-Control', 'no-store');
+  return c.body(Buffer.from(exported.bytes));
 }

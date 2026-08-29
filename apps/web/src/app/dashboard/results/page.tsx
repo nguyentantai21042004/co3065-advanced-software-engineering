@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState, type ReactNode } from 'react';
-import type { CvDataWire } from '@aicoach/shared/contracts/cv';
-import { api } from '@/lib/api';
+import type { CoachingReportWire, CvDataWire } from '@aicoach/shared/contracts/cv';
+import { API_URL, api } from '@/lib/api';
 import { getCurrentFile } from '@/lib/auth';
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -21,11 +21,102 @@ function asList(value: unknown): Record<string, unknown>[] {
   return [rec];
 }
 
+async function downloadExport(fileId: string, format: 'pdf' | 'docx') {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  const res = await fetch(`${API_URL}/cv/export/${fileId}/${format}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const message = await res.text();
+    throw new Error(message || `Export failed (${res.status})`);
+  }
+  const blob = await res.blob();
+  const disposition = res.headers.get('Content-Disposition') || '';
+  const matched = disposition.match(/filename="?([^"]+)"?/i);
+  const name = matched?.[1] || `coaching-report.${format === 'pdf' ? 'pdf' : 'docx'}`;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function CoachingSections({ report }: { report: CoachingReportWire }) {
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-blue-950">Coaching report</h2>
+        <p className="mt-1 text-sm text-blue-900/80">
+          Domain inference, format critique, experience notes, and recommendations — export as PDF or Word.
+        </p>
+      </section>
+
+      <section className="rounded-2xl bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold">Domain / job inference</h2>
+        <p className="mt-2 text-sm font-medium text-blue-700">{report.domain_inference.domain}</p>
+        <p className="mt-1 text-sm text-slate-600">{report.domain_inference.summary}</p>
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {report.domain_inference.job_titles.map((title) => (
+            <li key={title} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+              {title}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="rounded-2xl bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold">Format critique</h2>
+        <p className="mt-2 text-sm text-slate-700">{report.format_critique.summary}</p>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
+          {report.format_critique.findings.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="rounded-2xl bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold">Experience comments</h2>
+        <p className="mt-2 text-sm text-slate-700">{report.experience_comments.summary}</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Strengths</h3>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+              {report.experience_comments.strengths.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-700">Gaps</h3>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+              {report.experience_comments.gaps.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold">Recommendations</h2>
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-700">
+          {report.recommendations.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ol>
+      </section>
+    </div>
+  );
+}
+
 function ResultsInner() {
   const params = useSearchParams();
   const fileId = params.get('file_id') ?? getCurrentFile()?.fileId;
   const [data, setData] = useState<CvDataWire | null>(null);
   const [error, setError] = useState('');
+  const [exportError, setExportError] = useState('');
+  const [exporting, setExporting] = useState<'pdf' | 'docx' | null>(null);
 
   useEffect(() => {
     if (!fileId) {
@@ -36,6 +127,19 @@ function ResultsInner() {
       .then((res) => setData(res.data ?? null))
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load'));
   }, [fileId]);
+
+  async function onExport(format: 'pdf' | 'docx') {
+    if (!fileId) return;
+    setExportError('');
+    setExporting(format);
+    try {
+      await downloadExport(fileId, format);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'Export failed');
+    } finally {
+      setExporting(null);
+    }
+  }
 
   if (error) {
     return (
@@ -56,13 +160,43 @@ function ResultsInner() {
   const certsBlock = asRecord(data.certificates_languages);
   const certs = asList(certsBlock.certificates);
   const langs = asList(certsBlock.languages);
+  const report = data.coaching_report;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">CV Analysis Results</h1>
-        <p className="text-sm text-slate-500">file_id {data.file_id}</p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">CV Analysis Results</h1>
+          <p className="text-sm text-slate-500">file_id {data.file_id}</p>
+        </div>
+        {report && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void onExport('pdf')}
+              disabled={exporting !== null}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {exporting === 'pdf' ? 'Preparing PDF…' : 'Download PDF report'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void onExport('docx')}
+              disabled={exporting !== null}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60"
+            >
+              {exporting === 'docx' ? 'Preparing Word…' : 'Download Word report'}
+            </button>
+          </div>
+        )}
       </div>
+      {exportError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{exportError}</p>}
+
+      {report ? <CoachingSections report={report} /> : (
+        <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Coaching report is not ready yet. Wait for analysis to finish, then refresh.
+        </p>
+      )}
 
       <section className="rounded-2xl bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Basic info</h2>

@@ -133,11 +133,32 @@ describe('HTTP contracts', () => {
     });
     expect(cvData.file_id).toBe(fileId);
     expect(cvData.raw_text || cvData.basic_info || cvData.analysis_result).toBeTruthy();
+    expect(cvData.coaching_report?.domain_inference.domain).toBeTruthy();
+    expect(cvData.coaching_report?.format_critique.findings.length).toBeGreaterThan(0);
+    expect(cvData.coaching_report?.experience_comments.strengths.length).toBeGreaterThan(0);
+    expect(cvData.coaching_report?.recommendations.length).toBeGreaterThan(0);
 
     const listed = await app.request('/api/cv/list', { headers });
     expect(listed.status).toBe(200);
     const listBody = await parse<CvListItemWire[]>(listed);
     expect(listBody.error_code).toBe(0);
     expect(listBody.data?.some((item) => item.file_id === fileId)).toBe(true);
+
+    const pdfRes = await app.request(`/api/cv/export/${fileId}/pdf`, { headers });
+    expect(pdfRes.status).toBe(200);
+    expect(pdfRes.headers.get('content-type')).toContain('application/pdf');
+    const pdfBytes = new Uint8Array(await pdfRes.arrayBuffer());
+    expect(Buffer.from(pdfBytes.slice(0, 5)).toString('utf8')).toBe('%PDF-');
+
+    const docxRes = await app.request(`/api/cv/export/${fileId}/docx`, { headers });
+    expect(docxRes.status).toBe(200);
+    expect(docxRes.headers.get('content-type')).toContain(
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    );
+    const docxBytes = new Uint8Array(await docxRes.arrayBuffer());
+    expect(docxBytes[0]).toBe(0x50);
+    expect(docxBytes[1]).toBe(0x4b);
+    // Not a re-download of the tiny uploaded CV payload
+    expect(docxBytes.byteLength).toBeGreaterThan(200);
   });
 });

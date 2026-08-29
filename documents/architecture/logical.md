@@ -23,9 +23,11 @@ flowchart LR
   service --- queue["JobQueue"]
   queue --> worker["worker.ts"]
   worker --> extractor["extractor"]
-  worker --> analyzer["analyzer"]
+  worker --> analyzer["analyzer + coaching report"]
   extractor --> repo
   analyzer --> repo
+  handlers --> export["export-report pdf/docx"]
+  export --> service
 ```
 
 ASCII equivalent:
@@ -36,8 +38,9 @@ HTTP  →  routes.ts  →  handlers.ts  →  service.ts  →  repo.ts  →  SQL
                          +-- Auth JWT subject = email
                          +-- FileStorage local | S3
                          +-- JobQueue setImmediate
+                         +-- export-report (PDF / DOCX of coaching report)
                                 |
-                                +-- worker.ts → extractor → analyzer → repo
+                                +-- worker.ts → extractor → analyzer(+coaching_report) → repo
 ```
 
 - **Routes** register paths and attach `auth.protect` where needed. They do not parse bodies.
@@ -51,7 +54,7 @@ HTTP  →  routes.ts  →  handlers.ts  →  service.ts  →  repo.ts  →  SQL
 flowchart TB
   subgraph api["apps/api/src/modules"]
     users["users<br/>register / login"]
-    cv["cv<br/>upload extract data list types worker"]
+    cv["cv<br/>upload extract data list export worker"]
     system["system<br/>health"]
   end
 
@@ -62,6 +65,8 @@ flowchart TB
     q["queue"]
     llm["llm"]
     extract["extract"]
+    coach["coaching-report"]
+    exp["export-report"]
   end
 
   users --> http
@@ -73,11 +78,15 @@ flowchart TB
   cv --> q
   cv --> llm
   cv --> extract
+  llm --> coach
+  cv --> exp
 ```
 
 - `users` — register / login
-- `cv` — upload, extract, data, list, supported-types, worker
+- `cv` — upload, extract, data, list, supported-types, **export pdf/docx**, worker
 - `system` — health
+- `coaching-report` — pure builder for domain / format / experience / recommendations
+- `export-report` — PDF + Word binaries of that report (not the original CV)
 
 ## Wire
 
@@ -107,11 +116,13 @@ sequenceDiagram
   W->>FS: get bytes
   W->>W: extract text
   W->>DB: insert extraction_result
-  W->>W: Gemini or stub analyze
+  W->>W: Gemini or stub analyze + coaching_report
   W->>DB: insert cv_analysis_result
   Client->>API: GET /api/cv/data/{file_id}
   API->>DB: load extraction + analysis
-  API-->>Client: CV data envelope
+  API-->>Client: CV data + coaching_report
+  Client->>API: GET /api/cv/export/{file_id}/pdf|docx
+  API-->>Client: binary coaching report
 ```
 
 `POST /api/cv/extract/{file_id}` enqueues `{ fileId }` and returns immediately. The in-process worker:
@@ -119,10 +130,12 @@ sequenceDiagram
 1. Loads bytes from storage
 2. Extracts text (`pdf-parse` / `mammoth`; fake PDFs fall back to UTF-8; `.doc` is best-effort)
 3. Inserts `extraction_result`
-4. Runs Gemini if `GEMINI_API_KEYS` is set, else a stub that fills the same keys
-5. Inserts `cv_analysis_result`
+4. Runs Gemini if `GEMINI_API_KEYS` is set, else a stub; always attaches a **coaching report** (domain inference, format critique, experience comments, recommendations)
+5. Inserts `cv_analysis_result` (with `analysis_result.coaching_report`)
 
-`GET /api/cv/data/{file_id}` returns extraction-only while analysis is still running (404 until extraction exists).
+`GET /api/cv/data/{file_id}` returns extraction-only while analysis is still running (404 until extraction exists). When analysis is ready it also returns top-level `coaching_report`.
+
+Export endpoints stream the **coaching report** as `application/pdf` or Word OOXML — not the original uploaded CV bytes.
 
 ## Authz
 

@@ -1,9 +1,13 @@
+import type { CoachingReportWire } from '@aicoach/shared/contracts/cv';
+import { buildCoachingReport } from './coaching-report.js';
+
 export interface CvAnalysis {
   basic_info: Record<string, unknown>;
   education: unknown;
   work_experience: unknown;
   skills: unknown;
   certificates_languages: unknown;
+  coaching_report: CoachingReportWire;
   analysis_result: Record<string, unknown>;
 }
 
@@ -40,18 +44,27 @@ export function stubAnalyze(rawText: string): CvAnalysis {
   const work_experience: unknown[] = [];
   const skills: unknown[] = [];
   const certificates_languages = { certificates: [], languages: [] };
+  const coaching_report = buildCoachingReport(rawText, {
+    basic_info,
+    education,
+    work_experience,
+    skills,
+    certificates_languages,
+  });
   return {
     basic_info,
     education,
     work_experience,
     skills,
     certificates_languages,
+    coaching_report,
     analysis_result: {
       basic_info,
       education,
       work_experience,
       skills,
       certificates_languages,
+      coaching_report,
     },
   };
 }
@@ -99,18 +112,28 @@ ${rawText.slice(0, 24_000)}`;
         const skills = parsed.skills ?? [];
         const certificates_languages =
           parsed.certificates_languages ?? { certificates: parsed.certificates ?? [], languages: parsed.languages ?? [] };
-        return {
-          basic_info: Object.keys(basic_info).length ? basic_info : fallback.basic_info,
+        const resolvedBasic = Object.keys(basic_info).length ? basic_info : fallback.basic_info;
+        const coaching_report = buildCoachingReport(rawText, {
+          basic_info: resolvedBasic,
           education,
           work_experience,
           skills,
           certificates_languages,
+        });
+        return {
+          basic_info: resolvedBasic,
+          education,
+          work_experience,
+          skills,
+          certificates_languages,
+          coaching_report,
           analysis_result: {
-            basic_info: Object.keys(basic_info).length ? basic_info : fallback.basic_info,
+            basic_info: resolvedBasic,
             education,
             work_experience,
             skills,
             certificates_languages,
+            coaching_report,
           },
         };
       } catch (err) {

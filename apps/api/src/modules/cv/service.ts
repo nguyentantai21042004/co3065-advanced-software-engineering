@@ -1,7 +1,18 @@
 import { randomUUID } from 'node:crypto';
 import { basename, extname } from 'node:path';
-import type { CvDataWire, CvListItemWire, UploadedFileWire } from '@aicoach/shared/contracts/cv';
+import type {
+  CoachingReportWire,
+  CvDataWire,
+  CvListItemWire,
+  UploadedFileWire,
+} from '@aicoach/shared/contracts/cv';
 import { badRequest, forbidden, notFound, payloadTooLarge } from '../../platform/errors.js';
+import {
+  coachingReportFromAnalysis,
+  exportCoachingReportDocx,
+  exportCoachingReportPdf,
+  isCoachingReport,
+} from '../../platform/export-report.js';
 import type { FileStorage } from '../../platform/storage.js';
 import type { JobQueue } from '../../platform/queue.js';
 import type { UserRepo } from '../users/repo.js';
@@ -41,6 +52,23 @@ function presentListItem(row: ListedFileRow): CvListItemWire {
   return { ...presentFile(row), status: row.status };
 }
 
+function pickCoachingReport(analysis: AnalysisRow, rawText: string | null): CoachingReportWire | null {
+  const fromAnalysis = analysis.analysis_result;
+  if (fromAnalysis && typeof fromAnalysis === 'object') {
+    const nested = (fromAnalysis as Record<string, unknown>).coaching_report;
+    if (isCoachingReport(nested)) return nested;
+  }
+  if (isCoachingReport(fromAnalysis)) return fromAnalysis;
+  // Older rows without coaching_report: derive on read so export still works.
+  return coachingReportFromAnalysis(fromAnalysis, rawText ?? '', {
+    basic_info: (analysis.basic_info as Record<string, unknown>) ?? {},
+    education: analysis.education,
+    work_experience: analysis.work_experience,
+    skills: analysis.skills,
+    certificates_languages: analysis.certificates_languages,
+  });
+}
+
 function presentCvData(file: UploadedFileRow, extraction: ExtractionRow, analysis: AnalysisRow | null): CvDataWire {
   const data: CvDataWire = {
     file_id: file.file_id,
@@ -57,8 +85,17 @@ function presentCvData(file: UploadedFileRow, extraction: ExtractionRow, analysi
   data.skills = analysis.skills;
   data.certificates_languages = analysis.certificates_languages;
   data.analysis_result = analysis.analysis_result;
+  data.coaching_report = pickCoachingReport(analysis, extraction.raw_text);
   data.analysis_completed_at = toWireTime(analysis.created_at);
   return data;
+}
+
+export type ExportFormat = 'pdf' | 'docx';
+
+export interface ExportBinary {
+  bytes: Uint8Array;
+  contentType: string;
+  fileName: string;
 }
 
 function isAllowed(fileName: string, contentType: string): boolean {
@@ -122,6 +159,38 @@ export class CvService {
     if (!user) return [];
     const rows = await this.repo.listByUser(user.id);
     return rows.map(presentListItem);
+  }
+
+  async exportReport(fileId: string, email: string, format: ExportFormat): Promise<ExportBinary> {
+    const file = await this.requireOwnedFile(fileId, email);
+    const extraction = await this.repo.getExtractionByFileId(fileId);
+    if (!extraction) throw notFound(`Extraction result not found for file: ${fileId}`);
+    const analysis = await this.repo.getAnalysisByFileId(fileId);
+    if (!analysis) throw notFound('Coaching report is not ready yet; wait for analysis to finish');
+
+    const report = pickCoachingReport(analysis, extraction.raw_text);
+    if (!report) throw notFound('Coaching report missing');
+
+    const basic = (analysis.basic_info as Record<string, unknown> | null) ?? {};
+    const candidateName = typeof basic.name === 'string' ? basic.name : undefined;
+    const stem = basename(file.original_file_name, extname(file.original_file_name)) || 'cv';
+    const input = { fileName: file.original_file_name, candidateName, report };
+
+    if (format === 'pdf') {
+      const bytes = await exportCoachingReportPdf(input);
+      return {
+        bytes,
+        contentType: 'application/pdf',
+        fileName: `${stem}-coaching-report.pdf`,
+      };
+    }
+
+    const bytes = await exportCoachingReportDocx(input);
+    return {
+      bytes,
+      contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      fileName: `${stem}-coaching-report.docx`,
+    };
   }
 
   private async requireOwnedFile(fileId: string, email: string): Promise<UploadedFileRow> {

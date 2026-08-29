@@ -38,6 +38,10 @@ export function registerCvWorker(deps: CvWorkerDeps): void {
     });
 
     const analysis = await deps.analyzer.analyze(rawText || '');
+    const analysisResult = {
+      ...analysis.analysis_result,
+      coaching_report: analysis.coaching_report,
+    };
     await deps.repo.insertAnalysis({
       id: randomUUID(),
       extraction_result_id: extraction.id,
@@ -47,7 +51,7 @@ export function registerCvWorker(deps: CvWorkerDeps): void {
       work_experience: analysis.work_experience,
       skills: analysis.skills,
       certificates_languages: analysis.certificates_languages,
-      analysis_result: analysis.analysis_result,
+      analysis_result: analysisResult,
     });
   });
 }
