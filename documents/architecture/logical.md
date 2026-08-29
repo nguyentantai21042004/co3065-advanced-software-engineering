@@ -1,13 +1,19 @@
-# Logical architecture
+# Kiến trúc logic
 
-Monorepo packages:
+Tài liệu mô tả cách code trong monorepo được chia lớp và module, gắn với luồng nghiệp vụ CV coaching. Cặp sơ đồ C4 mức hệ thống nằm ở [c4.md](c4.md). Bản thuyết trình logic lõi / extract / coaching: [core-logic.md](../core-logic.md), [extract-pipeline.md](../extract-pipeline.md), [coaching-personalization.md](../coaching-personalization.md).
 
-| Package | Role |
-| --- | --- |
-| `@aicoach/api` | HTTP + worker + `src/contracts` (Zod) |
-| `@aicoach/web` | UI + `src/types/wire` (types only) |
+## Gói trong monorepo
 
-## API layers
+| Package        | Vai trò                                                |
+| -------------- | ------------------------------------------------------ |
+| `@aicoach/api` | HTTP + worker in-process + Zod contracts               |
+| `@aicoach/web` | UI Next.js + TypeScript wire types (không Zod runtime) |
+
+Không còn `packages/shared`. Hợp đồng wire sống ở API (`apps/api/src/contracts`); web mirror type ở `apps/web/src/types/wire.ts`.
+
+---
+
+## Lớp trong API
 
 ```mermaid
 flowchart LR
@@ -15,44 +21,38 @@ flowchart LR
   routes --> handlers["handlers.ts"]
   handlers --> service["service.ts"]
   service --> repo["repo.ts"]
-  repo --> sql[("SQL")]
+  repo --> sql[("Neon / SQL")]
 
   handlers --- auth["Auth JWT"]
-  handlers --- storage["FileStorage"]
+  handlers --- storage["FileStorage R2"]
   service --- queue["JobQueue"]
   queue --> worker["worker.ts"]
-  worker --> extractor["extractor"]
-  worker --> analyzer["analyzer + coaching report"]
+  worker --> extractor["extract + cleanCvText"]
+  worker --> analyzer["LLM / stub + coaching report"]
   extractor --> repo
   analyzer --> repo
   handlers --> export["export-report pdf/docx"]
   export --> service
+  worker -.->|onAnalysisComplete| advice["advice snapshot"]
 ```
 
-ASCII equivalent:
+Quy ước trách nhiệm:
 
-```
-HTTP  →  routes.ts  →  handlers.ts  →  service.ts  →  repo.ts  →  SQL
-                         |
-                         +-- Auth JWT subject = email
-                         +-- FileStorage local | S3
-                         +-- JobQueue setImmediate
-                         +-- export-report (PDF / DOCX of coaching report)
-                                |
-                                +-- worker.ts → extractor → analyzer(+coaching_report) → repo
-```
+- **Routes** đăng ký path và gắn `auth.protect` khi cần. Không parse body nghiệp vụ.
+- **Handlers** là chỗ duy nhất nhìn Hono `c`: validate, đọc `c.get('email')`, gọi đúng một method service, trả `ok()` / lỗi envelope.
+- **Service** giữ luật nghiệp vụ (loại file, ownership, enqueue extract, dựng payload `GET /data`, export).
+- **Repo** sở hữu SQL cho bảng của mình. Repo được dựng một lần trong `platform/composition.ts`.
 
-- **Routes** register paths and attach `auth.protect` where needed. They do not parse bodies.
-- **Handlers** are the only place that sees Hono `c`: validate, read `c.get('email')`, call one service method, return `ok()`.
-- **Service** owns business rules (file type, ownership, enqueue extract).
-- **Repo** owns SQL for its tables. Repos are constructed once in `platform/composition.ts`.
+Handlers không gọi SQL trực tiếp. Service không nhận Hono context. Repo không biết JWT.
 
-## Modules
+---
+
+## Module nghiệp vụ
 
 ```mermaid
 flowchart TB
   subgraph api["apps/api/src/modules"]
-    users["users<br/>register / login"]
+    users["users<br/>đăng ký / đăng nhập"]
     cv["cv<br/>upload extract data list export worker"]
     advice["advice<br/>snapshots pins diff"]
     system["system<br/>health"]
@@ -65,7 +65,7 @@ flowchart TB
     q["queue"]
     llm["llm"]
     extract["extract"]
-    clean["cv-text cleanCvText"]
+    clean["cv-text"]
     coach["coaching-report"]
     exp["export-report"]
   end
@@ -87,25 +87,54 @@ flowchart TB
   cv -.->|onAnalysisComplete| advice
 ```
 
-- `users` — register / login
-- `cv` — upload, extract, data, list, supported-types, **export pdf/docx**, worker
-- `advice` — auto snapshots, manual pins, account-level diff
-- `system` — health
-- `cv-text` — ATS-inspired `cleanCvText` / `hasEnoughText` (no OCR in this demo)
-- `coaching-report` — pure builder for domain / format / experience / recommendations (tiếng Việt)
-- `export-report` — PDF + Word binaries of that report (not the original CV)
+| Module / platform | Việc nghiệp vụ                                                                  |
+| ----------------- | ------------------------------------------------------------------------------- |
+| `users`           | Tạo tài khoản, login, cấp JWT (subject = email)                                 |
+| `cv`              | Upload CV, xếp hàng extract, đọc kết quả, list file, xuất PDF/Word báo cáo      |
+| `advice`          | Timeline snapshot sau mỗi lần analyze, sổ tay pin, diff giữa hai snapshot       |
+| `system`          | Health check                                                                    |
+| `cv-text`         | `cleanCvText` / `hasEnoughText` (ý tưởng từ ATS; demo không OCR)                |
+| `coaching-report` | Builder thuần: lĩnh vực, format, kinh nghiệm, khuyến nghị (mặc định tiếng Việt) |
+| `export-report`   | Binary PDF (`pdf-lib`) và Word (`docx`) của báo cáo coaching, không phải CV gốc |
+| `storage`         | Adapter S3/R2 bắt buộc lúc boot                                                 |
+| `queue`           | `setImmediate` in-process; đủ cho demo single-node                              |
 
-## Wire
+---
 
-JSON is snake_case, matching legacy Jackson `SNAKE_CASE`:
+## Hợp đồng wire (JSON)
+
+JSON dùng **snake_case**, giữ tương thích contract cũ kiểu Jackson `SNAKE_CASE`.
+
+Envelope mọi response:
+
+```json
+{ "error_code": 0, "message": "OK", "data": {} }
+```
+
+Khi enqueue extract:
 
 ```json
 { "error_code": 0, "message": "Task accepted", "data": null }
 ```
 
-CV analysis fields (`basic_info`, `education`, `work_experience`, `skills`, `certificates_languages`, `analysis_result`) are JSON objects, not quoted strings (legacy `@JsonRawValue`).
+Các field phân tích CV (`basic_info`, `education`, `work_experience`, `skills`, `certificates_languages`, `analysis_result`) là **object JSON**, không phải chuỗi đã stringify (tương đương legacy `@JsonRawValue`).
 
-## Async extract
+`coaching_report` (top-level trên `GET /api/cv/data/{file_id}` khi đã analyze xong):
+
+```json
+{
+  "domain_inference": { "domain": "...", "job_titles": ["..."], "summary": "..." },
+  "format_critique": { "summary": "...", "findings": ["..."] },
+  "experience_comments": { "summary": "...", "strengths": ["..."], "gaps": ["..."] },
+  "recommendations": ["..."]
+}
+```
+
+Schema Zod: `apps/api/src/contracts/{auth,cv,advice,api}.ts`.
+
+---
+
+## Luồng async extract → coaching → cá nhân hoá
 
 ```mermaid
 sequenceDiagram
@@ -113,37 +142,76 @@ sequenceDiagram
   participant API as handlers/service
   participant Q as JobQueue
   participant W as worker
-  participant FS as FileStorage
+  participant FS as R2
   participant DB as repo
+  participant Adv as advice
 
   Client->>API: POST /api/cv/extract/{file_id}
   API->>Q: enqueue fileId
   API-->>Client: 200 Task accepted
   Q->>W: fileId
   W->>FS: get bytes
-  W->>W: extract text
+  W->>W: extract text + cleanCvText
   W->>DB: insert extraction_result
-  W->>W: Gemini or stub analyze + coaching_report
+  W->>W: LLM/stub analyze + coaching_report
   W->>DB: insert cv_analysis_result
+  W->>Adv: onAnalysisComplete → advice_snapshot
   Client->>API: GET /api/cv/data/{file_id}
   API->>DB: load extraction + analysis
   API-->>Client: CV data + coaching_report
   Client->>API: GET /api/cv/export/{file_id}/pdf|docx
-  API-->>Client: binary coaching report
+  API-->>Client: binary báo cáo coaching
 ```
 
-`POST /api/cv/extract/{file_id}` enqueues `{ fileId }` and returns immediately. The in-process worker:
+Các bước worker:
 
-1. Loads bytes from storage
-2. Extracts text (`pdf-parse` / `mammoth`; fake PDFs fall back to UTF-8; `.doc` is best-effort)
-3. Inserts `extraction_result`
-4. Runs Gemini if `GEMINI_API_KEYS` is set, else a stub; always attaches a **coaching report** (domain inference, format critique, experience comments, recommendations)
-5. Inserts `cv_analysis_result` (with `analysis_result.coaching_report`)
+1. Đọc bytes từ R2 theo `storage_path`.
+2. Trích text (`pdf-parse` / `mammoth`; PDF giả có thể fallback UTF-8; `.doc` best-effort).
+3. Làm sạch bằng `cleanCvText`; nếu không đủ text thì đánh dấu chất lượng thấp / dừng analyze tùy path.
+4. Insert `extraction_result`.
+5. Gọi LLM (Pollinations / Gemini) hoặc stub; luôn gắn **coaching report**.
+6. Insert `cv_analysis_result` (kèm `analysis_result.coaching_report`).
+7. Hook `onAnalysisComplete` tạo `advice_snapshot` theo user + file + fingerprint.
 
-`GET /api/cv/data/{file_id}` returns extraction-only while analysis is still running (404 until extraction exists). When analysis is ready it also returns top-level `coaching_report`.
+`GET /api/cv/data/{file_id}` trả extraction-only khi mới extract xong; khi analysis sẵn sàng thì có thêm top-level `coaching_report`. Export endpoints stream báo cáo coaching dạng `application/pdf` hoặc Word OOXML.
 
-Export endpoints stream the **coaching report** as `application/pdf` or Word OOXML — not the original uploaded CV bytes.
+---
 
-## Authz
+## Authz và ownership
 
-JWT Bearer, subject = email. Upload / extract / data / list require a valid token. Files are owned via `uploaded_file.user_id`.
+- Auth: Bearer JWT, subject = email.
+- Upload / extract / data / list / export / advice đều cần token hợp lệ (trừ health và một số auth route).
+- File gắn `uploaded_file.user_id`. Service từ chối đọc / extract / export file không thuộc user hiện tại.
+- Advice snapshots / pins luôn scope theo account (email → user id).
+
+---
+
+## Bảng dữ liệu chính
+
+| Bảng                 | Ý nghĩa nghiệp vụ                                      |
+| -------------------- | ------------------------------------------------------ |
+| `users`              | Tài khoản (email, password hash, display_name, locale) |
+| `uploaded_file`      | Metadata CV + `storage_path` trên R2                   |
+| `extraction_result`  | Text thô sau extract                                   |
+| `cv_analysis_result` | Structured CV + `analysis_result` (có coaching report) |
+| `advice_snapshot`    | Snapshot lời khuyên sau mỗi lần analyze thành công     |
+| `advice_pin`         | Ghim thủ công trên dashboard Advice                    |
+
+Schema bootstrap nằm trong `apps/api/src/platform/db.ts` (chạy khi mở DB).
+
+---
+
+## Web (ánh xạ màn hình → API)
+
+| Màn hình            | Path UI                                     | API chính                                           |
+| ------------------- | ------------------------------------------- | --------------------------------------------------- |
+| Landing             | `/`                                         | —                                                   |
+| Đăng ký / đăng nhập | `/auth/register`, `/auth/login`             | `POST /api/users/register`, `POST /api/users/login` |
+| Upload              | `/dashboard/upload`                         | `POST /api/cv/upload`, `POST /api/cv/extract/{id}`  |
+| Đang xử lý          | `/dashboard/processing`                     | poll `GET /api/cv/data/{id}`                        |
+| Kết quả             | `/dashboard/results`                        | `GET /api/cv/data/{id}`, export pdf/docx            |
+| Lịch sử             | `/dashboard/history`                        | `GET /api/cv/list`                                  |
+| Advice              | `/dashboard/advice`                         | snapshots / diff / pins                             |
+| Hồ sơ / settings    | `/dashboard/profile`, `/dashboard/settings` | user-facing settings UI                             |
+
+Web không chứa quyết luật nghiệp vụ nặng. Ownership, enqueue, và dựng báo cáo nằm hết phía API.
