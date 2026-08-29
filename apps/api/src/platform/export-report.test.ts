@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { buildCoachingReport } from './coaching-report.js';
-import { exportCoachingReportDocx, exportCoachingReportPdf } from './export-report.js';
+import {
+  exportCoachingReportDocx,
+  exportCoachingReportPdf,
+  toWinAnsiSafe,
+} from './export-report.js';
 
 describe('coaching report exporters', () => {
   const report = buildCoachingReport(
@@ -26,10 +30,30 @@ describe('coaching report exporters', () => {
     expect(latin.includes('endobj') || latin.includes('stream')).toBe(true);
   });
 
+  it('exportCoachingReportPdf succeeds with Vietnamese candidateName (WinAnsi-safe)', async () => {
+    expect(toWinAnsiSafe('Nguyễn Tấn Tài')).toBe('Nguyen Tan Tai');
+    expect(toWinAnsiSafe('Nguyễn Văn A')).toBe('Nguyen Van A');
+
+    const bytes = await exportCoachingReportPdf({
+      fileName: 'cv-nguyen-tan-tai.pdf',
+      candidateName: 'Nguyễn Tấn Tài',
+      report,
+    });
+    expect(bytes.byteLength).toBeGreaterThan(500);
+    expect(Buffer.from(bytes.slice(0, 5)).toString('utf8')).toBe('%PDF-');
+
+    const also = await exportCoachingReportPdf({
+      fileName: 'cv-nguyen-van-a.pdf',
+      candidateName: 'Nguyễn Văn A',
+      report,
+    });
+    expect(Buffer.from(also.slice(0, 5)).toString('utf8')).toBe('%PDF-');
+  });
+
   it('exportCoachingReportDocx returns ZIP/OOXML with word parts', async () => {
     const bytes = await exportCoachingReportDocx({
       fileName: 'jane-cv.pdf',
-      candidateName: 'Jane Doe',
+      candidateName: 'Nguyễn Tấn Tài',
       report,
     });
     expect(bytes.byteLength).toBeGreaterThan(100);

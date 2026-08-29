@@ -52,6 +52,20 @@ function wrapLine(text: string, width: number): string[] {
   return rows;
 }
 
+/**
+ * toWinAnsiSafe folds Vietnamese (and other) diacritics so pdf-lib StandardFonts
+ * (WinAnsi) can drawText without throwing "WinAnsi cannot encode".
+ */
+export function toWinAnsiSafe(text: string): string {
+  const folded = text.normalize('NFD').replace(/\p{M}+/gu, '');
+  // Keep printable WinAnsi-ish ASCII plus common punctuation; drop the rest.
+  return folded.replace(/[^\x20-\x7E\xA0-\xFF]/g, (ch) => {
+    if (ch === 'Đ') return 'D';
+    if (ch === 'đ') return 'd';
+    return '?';
+  });
+}
+
 /** exportCoachingReportPdf builds a readable PDF from the coaching report object. */
 export async function exportCoachingReportPdf(input: ExportReportInput): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
@@ -65,7 +79,8 @@ export async function exportCoachingReportPdf(input: ExportReportInput): Promise
   const draw = (text: string, opts?: { heading?: boolean }) => {
     const useBold = Boolean(opts?.heading);
     const face = useBold ? bold : font;
-    for (const row of wrapLine(text, 88)) {
+    const safe = toWinAnsiSafe(text);
+    for (const row of wrapLine(safe, 88)) {
       if (y < 56) {
         page = doc.addPage([595, 842]);
         y = 800;
