@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-export type PageContentWidth = 'default' | 'fluid' | 'detail' | 'wideForm' | 'form';
+export type PageContentWidth = 'container' | 'default' | 'detail' | 'wideForm' | 'form' | 'fluid';
 export type PageScrollMode = 'fill' | 'scroll';
 
 export interface Crumb {
@@ -23,11 +23,12 @@ export interface PageHeaderProps {
 }
 
 const WIDTH_CLASSES: Record<PageContentWidth, string> = {
+  container: 'max-w-6xl',
   default: 'max-w-[1440px]',
-  fluid: 'max-w-none',
   detail: 'max-w-[1280px]',
   wideForm: 'max-w-[1152px]',
   form: 'max-w-[960px]',
+  fluid: 'max-w-none',
 };
 
 /**
@@ -154,7 +155,7 @@ export function PageScroll({
  * Width matrix only, gutters are owned by PageScroll.
  */
 export function PageContent({
-  width = 'default',
+  width = 'container',
   fill = false,
   className,
   children,

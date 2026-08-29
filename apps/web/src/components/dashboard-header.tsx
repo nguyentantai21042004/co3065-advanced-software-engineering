@@ -36,7 +36,7 @@ export function DashboardHeader({ email }: DashboardHeaderProps) {
 
   const handleSignOut = () => {
     logout();
-    router.push('/auth/login');
+    router.push('/');
   };
 
   const userInitial = email ? email.charAt(0).toUpperCase() : 'U';

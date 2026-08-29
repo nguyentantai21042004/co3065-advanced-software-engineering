@@ -30,7 +30,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
   const isDisabled = disabled || loading;
 
   const baseStyles =
-    'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-all duration-150 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50 select-none focus-visible:outline-none';
+    'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-xl font-medium transition-all duration-150 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50 select-none focus-visible:outline-none';
 
   const variants = {
     primary: 'bg-slate-900 hover:bg-slate-800 text-white shadow-soft-xs active:bg-slate-950',
@@ -41,9 +41,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
   };
 
   const sizes = {
-    sm: 'h-8 px-2.5 text-xs [&_svg]:size-3.5',
-    md: 'h-9 px-3.5 py-1.5 text-xs sm:text-sm [&_svg]:size-4',
-    lg: 'h-10.5 px-4 py-2 text-sm font-medium [&_svg]:size-4',
+    sm: 'h-8 px-3 text-xs [&_svg]:size-3.5',
+    md: 'h-10 px-4 text-sm font-medium [&_svg]:size-4',
+    lg: 'h-11 px-5 text-sm font-semibold [&_svg]:size-4',
   };
 
   return (

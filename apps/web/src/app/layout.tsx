@@ -24,10 +24,15 @@ export const metadata: Metadata = {
   },
 };
 
+import { ToasterProvider } from '@/providers/toaster-provider';
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="h-full antialiased scroll-smooth">
-      <body className="flex min-h-full flex-col bg-slate-50 text-slate-900">{children}</body>
+      <body className="flex min-h-full flex-col bg-slate-50 text-slate-900">
+        {children}
+        <ToasterProvider />
+      </body>
     </html>
   );
 }

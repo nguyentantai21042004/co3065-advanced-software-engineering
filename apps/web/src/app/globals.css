@@ -71,7 +71,8 @@
   align-items: center;
   gap: 2px;
   padding: 3px;
-  border-radius: 10px;
+  height: 40px;
+  border-radius: 12px;
   background: var(--tabs-bar-bg);
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
@@ -82,7 +83,7 @@
   bottom: 3px;
   left: 0;
   background: var(--tabs-pill-bg);
-  border-radius: 8px;
+  border-radius: 9px;
   box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
   transform: translateX(0);
   transition:
@@ -98,10 +99,11 @@
   appearance: none;
   border: 0;
   background: transparent;
-  padding: 6px 14px;
+  height: 100%;
+  padding: 0 14px;
   color: var(--tabs-text-muted);
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 9px;
   z-index: 1;
   font-size: 13px;
   font-weight: 500;
@@ -238,4 +240,21 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Fleet Toast Status Border Indicators */
+.ln-toast-success {
+  border-left: 3.5px solid #10b981 !important;
+}
+
+.ln-toast-error {
+  border-left: 3.5px solid #ef4444 !important;
+}
+
+.ln-toast-warning {
+  border-left: 3.5px solid #f59e0b !important;
+}
+
+.ln-toast-info {
+  border-left: 3.5px solid #3b82f6 !important;
 }

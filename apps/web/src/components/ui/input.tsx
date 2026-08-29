@@ -50,9 +50,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Inp
           ref={ref}
           id={inputId}
           className={cn(
-            'flex h-9.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-all shadow-soft-xs focus:border-slate-900 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400',
-            leftIcon && 'pl-9',
-            rightIcon && 'pr-9',
+            'flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all shadow-soft-xs focus:border-slate-900 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400',
+            leftIcon && 'pl-10',
+            rightIcon && 'pr-10',
             error && 'border-red-500 focus:border-red-500',
             shaking && 'is-shaking',
             className,
