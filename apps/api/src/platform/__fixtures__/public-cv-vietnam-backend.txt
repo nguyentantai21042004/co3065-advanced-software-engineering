@@ -1,0 +1,32 @@
+TRẦN MINH KHOA
+khoa.tran@example.com • 0912 345 678 • Hà Nội, Việt Nam
+
+SUMMARY
+Backend Engineer 4 năm với Golang và Node.js; triển khai hệ thống thanh toán trên Kubernetes.
+Giảm p95 latency 28% cho API đối soát; hỗ trợ 500k giao dịch/ngày.
+
+EXPERIENCE
+Mar 2021 - Present VietPay JSC - Senior Backend Engineer
+Phát triển microservice Golang (Gin, PostgreSQL, RabbitMQ) cho cổng thanh toán.
+Owned CI/CD trên Jenkins + Docker; cắt thời gian deploy từ 45 phút xuống 12 phút.
+Xây pipeline xuất sao kê CSV cho đối tác ngân hàng.
+
+Jun 2018 - Feb 2021 SmartCity Solutions - Backend Developer
+Xây MQTT bridge cho IoT sensors; AWS IoT Core, Redis Pub/Sub, TypeScript workers.
+Delivered idempotent ingestion xử lý 10k messages/phút.
+
+PROJECTS
+SMAP Analytics — nền tảng lắng nghe MXH phân tán trên Kubernetes
+Kanban Board — Golang API + Next.js realtime WebSocket
+
+SKILLS
+Golang, Gin, TypeScript, Node.js, FastAPI, PostgreSQL, MongoDB, Redis, RabbitMQ
+Kubernetes, Docker, Jenkins, AWS (EC2, S3, IAM, VPC), Terraform, Nginx
+
+EDUCATION
+Hanoi University of Science and Technology
+Bachelor of Engineering, Computer Science
+Sep 2014 - Jun 2018
+
+CERTIFICATES
+TOEIC Score: 900

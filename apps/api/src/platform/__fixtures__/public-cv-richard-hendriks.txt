@@ -1,0 +1,28 @@
+Richard Hendriks
+richard.hendriks@mail.com • (912) 555-4321 • San Francisco
+http://richardhendricks.example.com
+
+SUMMARY
+Richard hails from Tulsa. He has earned degrees from the University of Oklahoma and Stanford. (Go Sooners and Cardinal!) Before starting Pied Piper, he worked for Hooli as a part time software developer. While his work focuses on applied information theory, mostly optimizing lossless compression schema of both the length-limited and adaptive variants, his non-work interests range widely, everything from quantum computing to chaos theory. He could tell you about it, but THAT would NOT be a “length-limited” conversation!
+
+EXPERIENCE
+Dec 2013 - Dec 2014Pied Piper - CEO/President
+Build an algorithm for artist to detect if their music was violating copy right infringement laws
+Successfully won Techcrunch Disrupt
+Optimized an algorithm that holds the current world record for Weisman Scores
+
+PROJECTS
+Miss Direction
+A mapping engine that misguides you
+Key Technologies: GoogleMaps, Chrome Extension, Javascript
+
+SKILLS
+HTML, CSS, Javascript, Web Development, Mpeg, MP4, GIF, Compression
+
+EDUCATION
+University of Oklahoma
+Bachelor, Information Technology
+Jun 2011 - Jan 2014
+
+CERTIFICATES
+Digital Compression Pioneer Award — Techcrunch (2014)

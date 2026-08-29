@@ -1,0 +1,33 @@
+Byungjin Park
+posquit0.bj@gmail.com • (+82) 10-9030-1843 • Seoul, S.Korea
+https://www.posquit0.com • github.com/posquit0
+
+SUMMARY
+Seasoned SRE/DevOps leader with 15+ years of software engineering expertise specializing in service architecture, DevOps and SRE practices, infrastructure operations, and security engineering. Founding member and infrastructure team lead at fintech companies; delivered cloud-native architectures on AWS multi-account, Kubernetes, and Terraform for reliability and scalability. Reduced incident response time and standardized deployments across dozens of AWS accounts.
+
+EXPERIENCE
+Sep 2023 - Mar 2024Dunamu Inc. - DevOps Engineer
+Led service mesh technology research and implementation across enterprise cross-cluster environments, evaluating Istio, Cilium, Kuma, Consul, and AWS VPC Lattice for enhanced security and scalability.
+Designed Terraform modules to efficiently manage and scale infrastructure across dozens of AWS accounts, enabling standardized, repeatable deployments.
+Owned Kubernetes platform operations and observability with Prometheus and Grafana.
+
+Mar 2021 - Jun 2023Danggeun Pay Inc. (KarrotPay) - Site Reliability Engineer
+Founding member and Infrastructure Team Lead for fintech payment platform.
+Built multi-account AWS landing zone with Terraform; shipped Kubernetes workloads for payment services.
+Delivered on-call practices that cut MTTR; automated CI/CD with Jenkins and Docker.
+
+Jan 2016 - Feb 2021Nexon Korea - Software Engineer
+Developed large-scale game platform services in Python and Golang.
+Implemented monitoring and deployment tooling for production game backends.
+
+PROJECTS
+chezmoi-powered macOS workstation automation
+Open-source contributions around terminal-centric SRE tooling
+
+SKILLS
+Kubernetes, Terraform, AWS, Docker, Istio, Linux, Prometheus, Grafana, Python, Golang, Jenkins
+
+EDUCATION
+Soongsil University
+Bachelor of Engineering, Computer Science
+Mar 2008 - Feb 2015

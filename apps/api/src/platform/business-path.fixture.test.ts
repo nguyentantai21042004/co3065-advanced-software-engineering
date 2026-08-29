@@ -28,7 +28,7 @@ function countFormatRecs(recs: string[]): number {
 }
 
 describe('business path fixtures (extract → coaching → PDF)', () => {
-  it('EN backend CV: heuristic fills contact/work/skills/education', () => {
+  it('EN lab CV: heuristic fills contact/work/skills/education', () => {
     const text = loadFixture('backend-engineer-en.txt');
     const extracted = heuristicExtractCv(text);
 
@@ -40,7 +40,7 @@ describe('business path fixtures (extract → coaching → PDF)', () => {
     expect(extracted.education.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('VN backend CV: diacritic name + contact + work/skills when date signals present', () => {
+  it('VN lab CV: diacritic name + contact + work/skills/education', () => {
     const text = loadFixture('backend-engineer-vi.txt');
     const extracted = heuristicExtractCv(text);
 
@@ -50,6 +50,53 @@ describe('business path fixtures (extract → coaching → PDF)', () => {
     expect(extracted.work_experience.length).toBeGreaterThanOrEqual(1);
     expect(extracted.skills.length).toBeGreaterThanOrEqual(4);
     expect(extracted.education.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('public JSON Resume sample (Richard Hendriks): enrich contact/work and education or skills', () => {
+    const text = loadFixture('public-cv-richard-hendriks.txt');
+    const extracted = heuristicExtractCv(text);
+    const analysis = stubAnalyze(text);
+
+    expect(extracted.basic_info.name).toMatch(/Richard Hendriks/i);
+    expect(extracted.basic_info.email).toMatch(/@/);
+    expect(extracted.basic_info.phone.length).toBeGreaterThan(6);
+    expect(extracted.work_experience.length).toBeGreaterThanOrEqual(1);
+    expect(extracted.work_experience.some((w) => /Pied Piper/i.test(w.company_name ?? ''))).toBe(true);
+    expect(
+      extracted.skills.length >= 1 || extracted.education.length >= 1,
+    ).toBe(true);
+    expect(extracted.education[0]?.school_name).toMatch(/Oklahoma|University/i);
+    expect(countContentRecs(analysis.coaching_report.recommendations)).toBeGreaterThanOrEqual(3);
+    expect(countFormatRecs(analysis.coaching_report.recommendations)).toBeLessThanOrEqual(1);
+  });
+
+  it('public Awesome-CV example (Byungjin Park): enrich contact/work/skills/education', () => {
+    const text = loadFixture('public-cv-byungjin-park.txt');
+    const extracted = heuristicExtractCv(text);
+    const analysis = stubAnalyze(text);
+
+    expect(extracted.basic_info.name).toMatch(/Byungjin Park/i);
+    expect(extracted.basic_info.email).toMatch(/@/);
+    expect(extracted.basic_info.phone.length).toBeGreaterThan(6);
+    expect(extracted.work_experience.length).toBeGreaterThanOrEqual(2);
+    expect(extracted.work_experience.some((w) => /Dunamu|KarrotPay|Nexon/i.test(w.company_name ?? ''))).toBe(
+      true,
+    );
+    expect(extracted.skills.length).toBeGreaterThanOrEqual(4);
+    expect(extracted.education[0]?.school_name).toMatch(/Soongsil|University/i);
+    expect(countContentRecs(analysis.coaching_report.recommendations)).toBeGreaterThanOrEqual(3);
+  });
+
+  it('Vietnamese-capable public-style CV: diacritics + structured enrich', () => {
+    const text = loadFixture('public-cv-vietnam-backend.txt');
+    const extracted = heuristicExtractCv(text);
+    const analysis = stubAnalyze(text);
+
+    expect(extracted.basic_info.name).toMatch(/TRẦN MINH KHOA|TRAN MINH KHOA/i);
+    expect(extracted.basic_info.email).toMatch(/@/);
+    expect(extracted.work_experience.length).toBeGreaterThanOrEqual(2);
+    expect(extracted.skills.length).toBeGreaterThanOrEqual(4);
+    expect(countContentRecs(analysis.coaching_report.recommendations)).toBeGreaterThanOrEqual(3);
   });
 
   it('stubAnalyze recommendations are majority content-enrichment', () => {
@@ -64,45 +111,35 @@ describe('business path fixtures (extract → coaching → PDF)', () => {
     expect(analysis.skills.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('buildCoachingReport + exportCoachingReportPdf keep Vietnamese headings', () => {
-    const text = loadFixture('backend-engineer-vi.txt');
+  it('buildCoachingReport + exportCoachingReportPdf keep Vietnamese headings', async () => {
+    const text = loadFixture('public-cv-vietnam-backend.txt');
     const extracted = heuristicExtractCv(text);
     const report = buildCoachingReport(text, extracted);
-    const pdf = exportCoachingReportPdf({
-      fileName: 'backend-engineer-vi.txt',
+    const bytes = await exportCoachingReportPdf({
+      fileName: 'public-cv-vietnam-backend.txt',
       candidateName: extracted.basic_info.name,
       report,
     });
 
-    return pdf.then((bytes) => {
-      expect(Buffer.from(bytes.slice(0, 5)).toString('utf8')).toBe('%PDF-');
-      expect(bytes.byteLength).toBeGreaterThan(2_000);
+    expect(Buffer.from(bytes.slice(0, 5)).toString('utf8')).toBe('%PDF-');
+    expect(bytes.byteLength).toBeGreaterThan(2_000);
 
-      const outPath = join(tmpdir(), `aicoach-fixture-${Date.now()}.pdf`);
-      writeFileSync(outPath, bytes);
+    const outPath = join(tmpdir(), `aicoach-fixture-${Date.now()}.pdf`);
+    writeFileSync(outPath, bytes);
 
-      let extractedText = '';
-      try {
-        extractedText = execFileSync('pdftotext', ['-layout', outPath, '-'], {
-          encoding: 'utf8',
-          maxBuffer: 2_000_000,
-        });
-      } catch {
-        // Fallback: ensure Unicode font path ran (non-trivial size) when pdftotext missing.
-        expect(bytes.byteLength).toBeGreaterThan(10_000);
-        return;
-      }
+    let extractedText = '';
+    try {
+      extractedText = execFileSync('pdftotext', ['-layout', outPath, '-'], {
+        encoding: 'utf8',
+        maxBuffer: 2_000_000,
+      });
+    } catch {
+      expect(bytes.byteLength).toBeGreaterThan(10_000);
+      return;
+    }
 
-      expect(extractedText).toMatch(/Báo cáo/);
-      expect(extractedText).toMatch(/Định hướng|Nội dung|Kế hoạch|định dạng/i);
-      expect(countContentRecs(report.recommendations)).toBeGreaterThanOrEqual(3);
-    });
-  });
-
-  it('downloaded public sample does not crash extract/coaching path', () => {
-    const text = loadFixture('public-awesome-cv-readme.txt');
-    const analysis = stubAnalyze(text);
-    expect(analysis.coaching_report.recommendations.length).toBeGreaterThan(0);
-    expect(analysis.coaching_report.domain_inference.domain.length).toBeGreaterThan(0);
+    expect(extractedText).toMatch(/Báo cáo/);
+    expect(extractedText).toMatch(/Định hướng|Nội dung|Kế hoạch|định dạng/i);
+    expect(countContentRecs(report.recommendations)).toBeGreaterThanOrEqual(3);
   });
 });

@@ -130,11 +130,18 @@ function pickWork(text: string): WorkExperienceItem[] {
 
 function pickEducation(text: string): EducationItem[] {
   const out: EducationItem[] = [];
-  const uni =
-    text.match(
-      /([^\n]{0,80}(?:University|Institute|College|Đại học)[^\n]{0,60})/i,
-    )?.[1]?.trim() ?? '';
-  const degreeMajor = text.match(
+  // Prefer the EDUCATION section so SUMMARY prose mentioning universities is ignored.
+  const sectionMatch = text.match(
+    /(?:^|\n)\s*(?:EDUCATION|HỌC VẤN|HOC VAN)\s*\n([\s\S]{0,1200}?)(?=\n\s*(?:SKILLS|EXPERIENCE|PROJECTS|CERTIFICATES|CHỨNG CHỈ|AWARDS)\b|$)/i,
+  );
+  const scope = sectionMatch?.[1] ?? text;
+
+  const candidates = [...scope.matchAll(/([^\n]*(?:University|Institute|College|Đại học)[^\n]*)/gi)]
+    .map((m) => m[1]!.trim())
+    .filter((line) => line.length > 0 && line.length <= 100 && line.split(/\s+/).length <= 12);
+
+  const uni = candidates[0] ?? '';
+  const degreeMajor = scope.match(
     /\b(Bachelor[^\n]{0,80}|Master[^\n]{0,80}|Cử nhân[^\n]{0,80}|Kỹ sư[^\n]{0,80})/i,
   )?.[1]?.trim();
   if (uni || degreeMajor) {
