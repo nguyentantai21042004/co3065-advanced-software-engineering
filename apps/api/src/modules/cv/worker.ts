@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { CoachingReportWire } from '../../contracts/cv.js';
+import type { CoachingReportWire, ExtractQuality } from '../../contracts/cv.js';
 import type { Analyzer } from '../../platform/llm.js';
 import type { TextExtractor } from '../../platform/extract.js';
 import type { FileStorage } from '../../platform/storage.js';
@@ -38,7 +38,7 @@ export function registerCvWorker(deps: CvWorkerDeps): void {
     const bytes = await deps.storage.get(file.storage_path);
     const rawExtracted = await deps.extractor.extract(bytes, file.content_type, file.original_file_name);
     const rawText = cleanCvText(rawExtracted || '');
-    const extractQuality = hasEnoughText(rawText) ? 'ok' : 'low';
+    const extractQuality: ExtractQuality = hasEnoughText(rawText) ? 'ok' : 'low';
 
     const extraction = await deps.repo.insertExtraction({
       id: randomUUID(),
@@ -50,7 +50,7 @@ export function registerCvWorker(deps: CvWorkerDeps): void {
     const analysis = await deps.analyzer.analyze(rawText || '');
     const analysisId = randomUUID();
     const analysisResult = {
-      ...analysis.analysis_result,
+      ...analysis,
       coaching_report: analysis.coaching_report,
       extract_quality: extractQuality,
     };

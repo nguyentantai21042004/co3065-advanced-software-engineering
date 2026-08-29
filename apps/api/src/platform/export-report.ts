@@ -1,7 +1,12 @@
 import { Document, Packer, Paragraph, HeadingLevel, TextRun } from 'docx';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import type { CoachingReportWire } from '../contracts/cv.js';
-import { buildCoachingReport } from './coaching-report.js';
+import {
+  coachingReportSchema,
+  cvAnalysisSchema,
+  type CoachingReportWire,
+  type CvAnalysis,
+} from '../contracts/cv.js';
+import { buildCoachingReport, type StructuredCvHints } from './coaching-report.js';
 
 export interface ExportReportInput {
   fileName: string;
@@ -152,34 +157,9 @@ export async function exportCoachingReportDocx(input: ExportReportInput): Promis
   return new Uint8Array(buf);
 }
 
-/** isCoachingReport checks the four required coaching sections exist. */
+/** isCoachingReport validates via Zod (four required coaching sections). */
 export function isCoachingReport(value: unknown): value is CoachingReportWire {
-  if (!value || typeof value !== 'object') return false;
-  const rec = value as Record<string, unknown>;
-  const domain = rec.domain_inference as Record<string, unknown> | undefined;
-  const format = rec.format_critique as Record<string, unknown> | undefined;
-  const experience = rec.experience_comments as Record<string, unknown> | undefined;
-  return Boolean(
-    domain &&
-      typeof domain.domain === 'string' &&
-      domain.domain &&
-      Array.isArray(domain.job_titles) &&
-      domain.job_titles.length > 0 &&
-      typeof domain.summary === 'string' &&
-      domain.summary &&
-      format &&
-      typeof format.summary === 'string' &&
-      Array.isArray(format.findings) &&
-      format.findings.length > 0 &&
-      experience &&
-      typeof experience.summary === 'string' &&
-      Array.isArray(experience.strengths) &&
-      experience.strengths.length > 0 &&
-      Array.isArray(experience.gaps) &&
-      experience.gaps.length > 0 &&
-      Array.isArray(rec.recommendations) &&
-      (rec.recommendations as unknown[]).length > 0,
-  );
+  return coachingReportSchema.safeParse(value).success;
 }
 
 /**
@@ -189,12 +169,26 @@ export function isCoachingReport(value: unknown): value is CoachingReportWire {
 export function coachingReportFromAnalysis(
   analysisResult: unknown,
   rawText = '',
-  hints?: Parameters<typeof buildCoachingReport>[1],
+  hints?: StructuredCvHints,
 ): CoachingReportWire {
-  if (analysisResult && typeof analysisResult === 'object') {
-    const rec = analysisResult as Record<string, unknown>;
-    if (isCoachingReport(rec.coaching_report)) return rec.coaching_report;
-    if (isCoachingReport(rec)) return rec;
-  }
-  return buildCoachingReport(rawText || 'Empty CV', hints ?? {});
+  const nested = coachingReportSchema.safeParse(
+    analysisResult && typeof analysisResult === 'object'
+      ? (analysisResult as { coaching_report?: unknown }).coaching_report
+      : undefined,
+  );
+  if (nested.success) return nested.data;
+
+  const asReport = coachingReportSchema.safeParse(analysisResult);
+  if (asReport.success) return asReport.data;
+
+  const asAnalysis = cvAnalysisSchema.safeParse(analysisResult);
+  if (asAnalysis.success) return asAnalysis.data.coaching_report;
+
+  return buildCoachingReport(rawText || 'CV trống', hints ?? {});
+}
+
+/** parseStoredAnalysis coerces JSONB analysis blobs into CvAnalysis when possible. */
+export function parseStoredAnalysis(value: unknown): CvAnalysis | null {
+  const parsed = cvAnalysisSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 }

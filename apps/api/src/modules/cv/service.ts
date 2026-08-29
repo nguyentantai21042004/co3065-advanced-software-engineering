@@ -1,17 +1,24 @@
 import { randomUUID } from 'node:crypto';
 import { basename, extname } from 'node:path';
-import type {
-  CoachingReportWire,
-  CvDataWire,
-  CvListItemWire,
-  UploadedFileWire,
+import {
+  basicInfoSchema,
+  certificatesLanguagesSchema,
+  coachingReportSchema,
+  cvAnalysisSchema,
+  educationItemSchema,
+  skillItemSchema,
+  workExperienceItemSchema,
+  type BasicInfo,
+  type CoachingReportWire,
+  type CvDataWire,
+  type CvListItemWire,
+  type UploadedFileWire,
 } from '../../contracts/cv.js';
 import { badRequest, forbidden, notFound, payloadTooLarge } from '../../platform/errors.js';
 import {
   coachingReportFromAnalysis,
   exportCoachingReportDocx,
   exportCoachingReportPdf,
-  isCoachingReport,
 } from '../../platform/export-report.js';
 import type { FileStorage } from '../../platform/storage.js';
 import type { JobQueue } from '../../platform/queue.js';
@@ -52,20 +59,29 @@ function presentListItem(row: ListedFileRow): CvListItemWire {
   return { ...presentFile(row), status: row.status };
 }
 
-function pickCoachingReport(analysis: AnalysisRow, rawText: string | null): CoachingReportWire | null {
-  const fromAnalysis = analysis.analysis_result;
-  if (fromAnalysis && typeof fromAnalysis === 'object') {
-    const nested = (fromAnalysis as Record<string, unknown>).coaching_report;
-    if (isCoachingReport(nested)) return nested;
-  }
-  if (isCoachingReport(fromAnalysis)) return fromAnalysis;
-  // Older rows without coaching_report: derive on read so export still works.
-  return coachingReportFromAnalysis(fromAnalysis, rawText ?? '', {
-    basic_info: (analysis.basic_info as Record<string, unknown>) ?? {},
-    education: analysis.education,
-    work_experience: analysis.work_experience,
-    skills: analysis.skills,
-    certificates_languages: analysis.certificates_languages,
+function coerceBasicInfo(value: unknown): BasicInfo {
+  return basicInfoSchema.parse(value ?? {});
+}
+
+function pickCoachingReport(analysis: AnalysisRow, rawText: string | null): CoachingReportWire {
+  const nested = coachingReportSchema.safeParse(
+    typeof analysis.analysis_result === 'object' && analysis.analysis_result
+      ? analysis.analysis_result.coaching_report
+      : undefined,
+  );
+  if (nested.success) return nested.data;
+
+  const fromRow = coachingReportSchema.safeParse(analysis.analysis_result);
+  if (fromRow.success) return fromRow.data;
+
+  return coachingReportFromAnalysis(analysis.analysis_result, rawText ?? '', {
+    basic_info: coerceBasicInfo(analysis.basic_info),
+    education: educationItemSchema.array().parse(analysis.education ?? []),
+    work_experience: workExperienceItemSchema.array().parse(analysis.work_experience ?? []),
+    skills: skillItemSchema.array().parse(analysis.skills ?? []),
+    certificates_languages: certificatesLanguagesSchema.parse(
+      analysis.certificates_languages ?? { certificates: [], languages: [] },
+    ),
   });
 }
 
@@ -78,14 +94,34 @@ function presentCvData(file: UploadedFileRow, extraction: ExtractionRow, analysi
     extraction_completed_at: toWireTime(extraction.created_at),
   };
   if (!analysis) return data;
+
+  const basic_info = coerceBasicInfo(analysis.basic_info);
+  const education = educationItemSchema.array().parse(analysis.education ?? []);
+  const work_experience = workExperienceItemSchema.array().parse(analysis.work_experience ?? []);
+  const skills = skillItemSchema.array().parse(analysis.skills ?? []);
+  const certificates_languages = certificatesLanguagesSchema.parse(
+    analysis.certificates_languages ?? { certificates: [], languages: [] },
+  );
+  const coaching_report = pickCoachingReport(analysis, extraction.raw_text);
+  const analysis_result =
+    cvAnalysisSchema.safeParse(analysis.analysis_result).data ??
+    cvAnalysisSchema.parse({
+      basic_info,
+      education,
+      work_experience,
+      skills,
+      certificates_languages,
+      coaching_report,
+    });
+
   data.analysis_result_id = analysis.id;
-  data.basic_info = analysis.basic_info;
-  data.education = analysis.education;
-  data.work_experience = analysis.work_experience;
-  data.skills = analysis.skills;
-  data.certificates_languages = analysis.certificates_languages;
-  data.analysis_result = analysis.analysis_result;
-  data.coaching_report = pickCoachingReport(analysis, extraction.raw_text);
+  data.basic_info = basic_info;
+  data.education = education;
+  data.work_experience = work_experience;
+  data.skills = skills;
+  data.certificates_languages = certificates_languages;
+  data.analysis_result = analysis_result;
+  data.coaching_report = coaching_report;
   data.analysis_completed_at = toWireTime(analysis.created_at);
   return data;
 }
@@ -171,8 +207,8 @@ export class CvService {
     const report = pickCoachingReport(analysis, extraction.raw_text);
     if (!report) throw notFound('Coaching report missing');
 
-    const basic = (analysis.basic_info as Record<string, unknown> | null) ?? {};
-    const candidateName = typeof basic.name === 'string' ? basic.name : undefined;
+    const basic = coerceBasicInfo(analysis.basic_info);
+    const candidateName = basic.name || undefined;
     const stem = basename(file.original_file_name, extname(file.original_file_name)) || 'cv';
     const input = { fileName: file.original_file_name, candidateName, report };
 

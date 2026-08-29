@@ -1,3 +1,11 @@
+import type {
+  BasicInfo,
+  CertificatesLanguages,
+  CvAnalysis,
+  EducationItem,
+  SkillItem,
+  WorkExperienceItem,
+} from '../../contracts/cv.js';
 import type { Sql } from '../../platform/db.js';
 
 export interface UploadedFileRow {
@@ -25,12 +33,12 @@ export interface AnalysisInsert {
   id: string;
   extraction_result_id: string;
   file_id: string;
-  basic_info: unknown;
-  education: unknown;
-  work_experience: unknown;
-  skills: unknown;
-  certificates_languages: unknown;
-  analysis_result: unknown;
+  basic_info: BasicInfo;
+  education: EducationItem[];
+  work_experience: WorkExperienceItem[];
+  skills: SkillItem[];
+  certificates_languages: CertificatesLanguages;
+  analysis_result: CvAnalysis;
 }
 
 export interface AnalysisRow extends AnalysisInsert {
@@ -41,8 +49,8 @@ export interface ListedFileRow extends UploadedFileRow {
   status: 'uploaded' | 'processing' | 'completed';
 }
 
-function jsonParam(value: unknown): string {
-  return JSON.stringify(value ?? null);
+function jsonParam(value: BasicInfo | EducationItem[] | WorkExperienceItem[] | SkillItem[] | CertificatesLanguages | CvAnalysis): string {
+  return JSON.stringify(value);
 }
 
 export class CvRepo {

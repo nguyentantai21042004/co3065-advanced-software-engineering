@@ -1,11 +1,18 @@
-import type { CoachingReportWire } from '../contracts/cv.js';
+import type {
+  BasicInfo,
+  CertificatesLanguages,
+  CoachingReportWire,
+  EducationItem,
+  SkillItem,
+  WorkExperienceItem,
+} from '../contracts/cv.js';
 
 export interface StructuredCvHints {
-  basic_info?: Record<string, unknown>;
-  education?: unknown;
-  work_experience?: unknown;
-  skills?: unknown;
-  certificates_languages?: unknown;
+  basic_info?: Partial<BasicInfo>;
+  education?: EducationItem[];
+  work_experience?: WorkExperienceItem[];
+  skills?: SkillItem[];
+  certificates_languages?: CertificatesLanguages;
 }
 
 const DOMAIN_KEYWORDS: { domain: string; titles: string[]; needles: RegExp }[] = [
@@ -32,11 +39,12 @@ const DOMAIN_KEYWORDS: { domain: string; titles: string[]; needles: RegExp }[] =
   },
 ];
 
-function asList(value: unknown): Record<string, unknown>[] {
-  if (Array.isArray(value)) {
-    return value.filter((item) => item && typeof item === 'object') as Record<string, unknown>[];
-  }
-  return [];
+function asWorkList(value: WorkExperienceItem[] | undefined): WorkExperienceItem[] {
+  return value ?? [];
+}
+
+function asSkillList(value: SkillItem[] | undefined): SkillItem[] {
+  return value ?? [];
 }
 
 function lineCount(text: string): number {
@@ -62,8 +70,8 @@ function inferDomain(rawText: string, hints: StructuredCvHints): CoachingReportW
       };
     }
   }
-  const titleHint = asList(hints.work_experience)[0];
-  const position = String(titleHint?.position ?? titleHint?.title ?? '').trim();
+  const titleHint = asWorkList(hints.work_experience)[0];
+  const position = (titleHint?.position ?? titleHint?.title ?? '').trim();
   if (position) {
     return {
       domain: 'Chuyên môn tổng quát',
@@ -85,10 +93,10 @@ function critiqueFormat(rawText: string, hints: StructuredCvHints): CoachingRepo
   if (lines < 8) {
     findings.push('Nội dung CV quá ngắn; hãy tách rõ các mục Tóm tắt, Kinh nghiệm, Học vấn, Kỹ năng.');
   }
-  if (!hasEmail(rawText) && !String(hints.basic_info?.email ?? '')) {
+  if (!hasEmail(rawText) && !(hints.basic_info?.email ?? '')) {
     findings.push('Chưa thấy email ở phần đầu — nhà tuyển dụng cần cách liên hệ rõ ràng.');
   }
-  if (!hasPhone(rawText) && !String(hints.basic_info?.phone ?? '')) {
+  if (!hasPhone(rawText) && !(hints.basic_info?.phone ?? '')) {
     findings.push('Thiếu số điện thoại; với thị trường Việt Nam nên để lại (có thể ghi khu vực).');
   }
   if (!/(experience|work|employment|education|skills|projects|kinh nghiệm|học vấn|kỹ năng|dự án)/i.test(rawText)) {
@@ -97,7 +105,7 @@ function critiqueFormat(rawText: string, hints: StructuredCvHints): CoachingRepo
   if (rawText.length > 6_000) {
     findings.push('CV hơi dài cho màn hình đầu; nên rút gọn vai trò cũ, giữ trang 1 tập trung.');
   }
-  if (asList(hints.work_experience).length === 0 && !/\b(20\d{2}|19\d{2})\b/.test(rawText)) {
+  if (asWorkList(hints.work_experience).length === 0 && !/\b(20\d{2}|19\d{2})\b/.test(rawText)) {
     findings.push('Mốc thời gian yếu; thêm năm bắt đầu–kết thúc cạnh mỗi vai trò.');
   }
   if (findings.length === 0) {
@@ -116,7 +124,8 @@ function commentExperience(
   rawText: string,
   hints: StructuredCvHints,
 ): CoachingReportWire['experience_comments'] {
-  const roles = asList(hints.work_experience);
+  const roles = asWorkList(hints.work_experience);
+  const skills = asSkillList(hints.skills);
   const strengths: string[] = [];
   const gaps: string[] = [];
 
@@ -134,7 +143,7 @@ function commentExperience(
     gaps.push('Thành tựu còn chung chung; viết lại bullet theo công thức hành động + bối cảnh + kết quả đo được.');
   }
 
-  if (asList(hints.skills).length > 0 || /\b(skills?|technologies|kỹ năng|công nghệ)\b/i.test(rawText)) {
+  if (skills.length > 0 || /\b(skills?|technologies|kỹ năng|công nghệ)\b/i.test(rawText)) {
     strengths.push('Đã đề cập kỹ năng; nên nhóm theo ngôn ngữ / công cụ / soft skills.');
   } else {
     gaps.push('Danh sách kỹ năng mỏng — nêu rõ công cụ đã dùng ở các vai trò gần đây.');

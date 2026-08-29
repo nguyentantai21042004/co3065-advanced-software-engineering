@@ -43,18 +43,63 @@ export type CoachingReportWire = {
   recommendations: string[];
 };
 
+export type BasicInfo = {
+  name: string;
+  email: string;
+  phone: string;
+  gender?: number | string;
+  address: string;
+  date_of_birth: string;
+};
+
+export type EducationItem = {
+  school_name?: string;
+  school?: string;
+  degree?: string;
+  major?: string;
+  graduation_date?: string;
+};
+
+export type WorkExperienceItem = {
+  company_name?: string;
+  company?: string;
+  position?: string;
+  title?: string;
+  time?: string;
+};
+
+export type SkillItem = {
+  name?: string;
+  category?: string;
+  level?: number;
+  level_label?: string;
+};
+
+export type CertificatesLanguages = {
+  certificates: Array<{ name?: string; organization?: string; date?: string }>;
+  languages: Array<{ name?: string; proficiency?: string }>;
+};
+
 export type CvDataWire = {
   file_id: string;
   extraction_result_id: string;
   analysis_result_id?: string | null;
   raw_text?: string | null;
   avatar_id?: string | null;
-  basic_info?: unknown | null;
-  education?: unknown | null;
-  work_experience?: unknown | null;
-  skills?: unknown | null;
-  certificates_languages?: unknown | null;
-  analysis_result?: unknown | null;
+  basic_info?: BasicInfo | null;
+  education?: EducationItem[] | null;
+  work_experience?: WorkExperienceItem[] | null;
+  skills?: SkillItem[] | null;
+  certificates_languages?: CertificatesLanguages | null;
+  analysis_result?: {
+    basic_info: BasicInfo;
+    education: EducationItem[];
+    work_experience: WorkExperienceItem[];
+    skills: SkillItem[];
+    certificates_languages: CertificatesLanguages;
+    coaching_report: CoachingReportWire;
+    extract_quality?: 'ok' | 'low';
+  } | null;
   coaching_report?: CoachingReportWire | null;
   extraction_completed_at?: string | null;
   analysis_completed_at?: string | null;
