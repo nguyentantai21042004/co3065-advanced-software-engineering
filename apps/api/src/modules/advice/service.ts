@@ -8,8 +8,8 @@ import type {
   AdviceSnapshotWire,
   CreateAdvicePinBody,
   PatchAdvicePinBody,
-} from '@aicoach/shared/contracts/advice';
-import type { CoachingReportWire } from '@aicoach/shared/contracts/cv';
+} from '../../contracts/advice.js';
+import type { CoachingReportWire } from '../../contracts/cv.js';
 import { badRequest, forbidden, notFound } from '../../platform/errors.js';
 import type { UserRepo } from '../users/repo.js';
 import { diffCoachingReports } from './diff.js';

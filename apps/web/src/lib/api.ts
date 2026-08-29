@@ -1,4 +1,4 @@
-import type { ApiEnvelope } from '@aicoach/shared/contracts/api';
+import type { ApiEnvelope } from '@/types/wire';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8090/api';
 

@@ -1,5 +1,5 @@
-import type { CoachingReportWire } from '@aicoach/shared/contracts/cv';
-import type { AdvicePinStatus, AdviceSection } from '@aicoach/shared/contracts/advice';
+import type { CoachingReportWire } from '../../contracts/cv.js';
+import type { AdvicePinStatus, AdviceSection } from '../../contracts/advice.js';
 import type { Sql } from '../../platform/db.js';
 
 export interface AdviceSnapshotRow {

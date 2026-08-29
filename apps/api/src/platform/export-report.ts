@@ -1,6 +1,6 @@
 import { Document, Packer, Paragraph, HeadingLevel, TextRun } from 'docx';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import type { CoachingReportWire } from '@aicoach/shared/contracts/cv';
+import type { CoachingReportWire } from '../contracts/cv.js';
 import { buildCoachingReport } from './coaching-report.js';
 
 export interface ExportReportInput {

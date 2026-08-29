@@ -2,7 +2,7 @@
 
 CV upload → extract → structured fields **plus a coaching report** (domain/job inference, format critique, experience comments, recommendations) → download that report as **PDF** or **Word**. Course demo for **CO3065 — Advanced Software Engineering** (HCMUT).
 
-Legacy auth/CV HTTP contracts from the old Spring app are preserved. The implementation is a pnpm/turbo monorepo shaped like a small Fleet-style TypeScript system (`apps/api` Hono layers, `apps/web` Next.js App Router, `packages/shared` Zod wire contracts).
+Legacy auth/CV HTTP contracts from the old Spring app are preserved. The implementation is a pnpm/turbo monorepo shaped like a small Fleet-style TypeScript system (`apps/api` Hono layers, `apps/web` Next.js App Router, `apps/api/src/contracts` Zod wire contracts).
 
 ## Quick start
 
@@ -31,7 +31,8 @@ apps/api          Hono API, port 8090
   src/platform/   http, auth, db, storage, queue, llm, extract, coaching-report, export-report, cv-text
   src/modules/    users | cv | advice | system   (routes → handlers → service → repo)
 apps/web          Next.js App Router, port 3000
-packages/shared   Zod wire contracts (snake_case JSON), including coaching_report + advice
+apps/api/src/contracts   Zod wire schemas (API)
+apps/web/src/types       Client TypeScript wire types
 ```
 
 Handlers own the Hono context `c`. Services take plain arguments. Repos own SQL. The composition root (`platform/composition.ts`) constructs repos once.

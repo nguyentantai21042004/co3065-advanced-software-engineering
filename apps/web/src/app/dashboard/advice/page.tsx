@@ -6,8 +6,13 @@ import type {
   AdvicePinWire,
   AdviceSnapshotListWire,
   AdviceSnapshotWire,
-} from '@aicoach/shared/contracts/advice';
+} from '@/types/wire';
 import { api } from '@/lib/api';
+import { PageFrame, PageHeader, PageScroll, PageContent } from '@/components/shell/page-frame';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { History, GitCompare, Bookmark, Trash2, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function AdvicePage() {
   const [snapshots, setSnapshots] = useState<AdviceSnapshotWire[]>([]);
@@ -105,162 +110,227 @@ export default function AdvicePage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Lời khuyên cá nhân</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Snapshot tự động sau mỗi lần phân tích CV trong account, so sánh thay đổi theo thời gian, và sổ tay
-          ghim thủ công.
-        </p>
-      </div>
+    <PageFrame>
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Bảng điều khiển', href: '/dashboard/upload' },
+          { label: 'Lời khuyên cá nhân' },
+        ]}
+        title="Lời khuyên &amp; Tiến trình cá nhân"
+        description="Snapshot tự động sau mỗi lần phân tích CV, so sánh thay đổi và quản lý sổ tay mục tiêu."
+        maxWidthClass="max-w-[1280px]"
+      />
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Timeline phân tích</h2>
-        {snapshots.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">Chưa có snapshot. Hãy upload và phân tích ít nhất một CV.</p>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {snapshots.map((s) => (
-              <li key={s.id} className="rounded-xl border border-slate-200 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-slate-900">{s.domain}</p>
-                    <p className="mt-1 text-sm text-slate-600">{s.summary}</p>
-                    <p className="mt-2 text-xs text-slate-500">
-                      {new Date(s.created_at).toLocaleString('vi-VN')}
-                      {s.file_name ? ` · ${s.file_name}` : ''}
-                    </p>
-                  </div>
-                  <code className="text-[10px] text-slate-400">{s.id.slice(0, 8)}</code>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">So sánh giữa các lần (toàn account)</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Mặc định: lần mới nhất vs lần trước. Hoặc chọn thủ công hai snapshot bất kỳ.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <label className="text-sm">
-            Bản cũ (left)
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              value={leftId}
-              onChange={(e) => setLeftId(e.target.value)}
-            >
-              <option value="">—</option>
-              {snapshots.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {new Date(s.created_at).toLocaleString('vi-VN')} · {s.domain}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-sm">
-            Bản mới (right)
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              value={rightId}
-              onChange={(e) => setRightId(e.target.value)}
-            >
-              <option value="">—</option>
-              {snapshots.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {new Date(s.created_at).toLocaleString('vi-VN')} · {s.domain}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <button
-          type="button"
-          disabled={busy || snapshots.length < 2}
-          onClick={() => void runDiff()}
-          className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-        >
-          {busy ? 'Đang so sánh…' : 'So sánh'}
-        </button>
-        {(selectedLeft || selectedRight) && (
-          <p className="mt-2 text-xs text-slate-500">
-            {selectedLeft?.file_name ?? '…'} → {selectedRight?.file_name ?? '…'}
-          </p>
-        )}
-        {diff && (
-          <div className="mt-6 space-y-4 rounded-xl bg-slate-50 p-4 text-sm">
-            <p>
-              <span className="font-medium">Domain:</span>{' '}
-              {diff.changes.domain_changed
-                ? `${diff.changes.domain?.from} → ${diff.changes.domain?.to}`
-                : 'Không đổi'}
-            </p>
-            <DiffList title="Recommendations thêm" items={diff.changes.recommendations.added} tone="add" />
-            <DiffList title="Recommendations bỏ" items={diff.changes.recommendations.removed} tone="remove" />
-            <DiffList title="Format findings thêm" items={diff.changes.format_findings.added} tone="add" />
-            <DiffList title="Format findings bỏ" items={diff.changes.format_findings.removed} tone="remove" />
-            <DiffList title="Strengths thêm" items={diff.changes.experience.strengths_added} tone="add" />
-            <DiffList title="Gaps thêm" items={diff.changes.experience.gaps_added} tone="add" />
-          </div>
-        )}
-      </section>
-
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Sổ tay ghim</h2>
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <input
-            value={pinBody}
-            onChange={(e) => setPinBody(e.target.value)}
-            placeholder="Ghim một lời khuyên / việc cần làm…"
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          />
-          <button
-            type="button"
-            disabled={busy || !pinBody.trim()}
-            onClick={() => void createPin()}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-          >
-            Ghim
-          </button>
-        </div>
-        <ul className="mt-4 space-y-3">
-          {pins.length === 0 ? (
-            <li className="text-sm text-slate-500">Chưa ghim mục nào. Có thể ghim từ trang kết quả hoặc ô trên.</li>
-          ) : (
-            pins.map((p) => (
-              <li key={p.id} className="rounded-xl border border-slate-200 p-4">
-                <p className="text-sm text-slate-800">{p.body}</p>
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5">{p.section}</span>
-                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-700">{p.status}</span>
-                  {(['todo', 'doing', 'done', 'archived'] as const).map((st) => (
-                    <button
-                      key={st}
-                      type="button"
-                      onClick={() => void setPinStatus(p.id, st)}
-                      className="rounded border border-slate-200 px-2 py-0.5 hover:bg-slate-50"
-                    >
-                      {st}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => void removePin(p.id)}
-                    className="ml-auto text-red-600 hover:underline"
-                  >
-                    Xoá
-                  </button>
-                </div>
-              </li>
-            ))
+      <PageScroll mode="scroll">
+        <PageContent width="detail" className="space-y-6">
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+              {error}
+            </div>
           )}
-        </ul>
-      </section>
-    </div>
+
+          {/* Section 1: Timeline Snapshots */}
+          <Card className="p-6 bg-white border border-slate-200 shadow-soft-xs">
+            <div className="flex items-center gap-2 mb-4">
+              <History className="h-4.5 w-4.5 text-blue-600" />
+              <h2 className="text-sm font-bold text-slate-900">Timeline phân tích hồ sơ</h2>
+            </div>
+
+            {snapshots.length === 0 ? (
+              <p className="text-xs text-slate-500 italic">
+                Chưa có snapshot nào. Hãy tải lên và phân tích ít nhất một CV.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {snapshots.map((s) => (
+                  <li
+                    key={s.id}
+                    className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-sm text-slate-900">{s.domain}</p>
+                          <Badge variant="brand" size="sm">Snapshot</Badge>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-600 leading-relaxed">{s.summary}</p>
+                        <p className="mt-2 text-[11px] text-slate-400 font-mono">
+                          {new Date(s.created_at).toLocaleString('vi-VN')}
+                          {s.file_name ? ` · ${s.file_name}` : ''}
+                        </p>
+                      </div>
+                      <code className="text-[10px] text-slate-400 font-mono bg-white px-2 py-0.5 rounded border border-slate-200">
+                        {s.id.slice(0, 8)}
+                      </code>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          {/* Section 2: Account-Wide Comparison */}
+          <Card className="p-6 bg-white border border-slate-200 shadow-soft-xs">
+            <div className="flex items-center gap-2 mb-1">
+              <GitCompare className="h-4.5 w-4.5 text-blue-600" />
+              <h2 className="text-sm font-bold text-slate-900">So sánh giữa các phiên phân tích</h2>
+            </div>
+            <p className="text-xs text-slate-500 mb-4">
+              Mặc định: lần mới nhất so với lần trước. Hoặc chọn thủ công hai snapshot bất kỳ.
+            </p>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Bản cũ (phiên trước)
+                </label>
+                <select
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-slate-900 focus:outline-none transition-colors"
+                  value={leftId}
+                  onChange={(e) => setLeftId(e.target.value)}
+                >
+                  <option value="">— Chọn phiên —</option>
+                  {snapshots.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {new Date(s.created_at).toLocaleString('vi-VN')} · {s.domain}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Bản mới (phiên hiện tại)
+                </label>
+                <select
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:border-slate-900 focus:outline-none transition-colors"
+                  value={rightId}
+                  onChange={(e) => setRightId(e.target.value)}
+                >
+                  <option value="">— Chọn phiên —</option>
+                  {snapshots.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {new Date(s.created_at).toLocaleString('vi-VN')} · {s.domain}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center gap-3">
+              <Button
+                size="sm"
+                disabled={busy || snapshots.length < 2}
+                onClick={() => void runDiff()}
+              >
+                {busy ? 'Đang so sánh…' : 'Thực hiện so sánh'}
+              </Button>
+
+              {(selectedLeft || selectedRight) && (
+                <span className="text-xs text-slate-500 font-mono">
+                  {selectedLeft?.file_name ?? '…'} → {selectedRight?.file_name ?? '…'}
+                </span>
+              )}
+            </div>
+
+            {diff && (
+              <div className="mt-5 space-y-3.5 rounded-xl border border-slate-200 bg-slate-50/70 p-4 text-xs">
+                <p className="font-semibold text-slate-900">
+                  Lĩnh vực:{' '}
+                  {diff.changes.domain_changed ? (
+                    <span className="text-blue-600 font-bold">
+                      {diff.changes.domain?.from} → {diff.changes.domain?.to}
+                    </span>
+                  ) : (
+                    <span className="text-slate-500">Không đổi</span>
+                  )}
+                </p>
+                <DiffList title="Khuyến nghị bổ sung mới" items={diff.changes.recommendations.added} tone="add" />
+                <DiffList title="Khuyến nghị đã khắc phục / loại bỏ" items={diff.changes.recommendations.removed} tone="remove" />
+                <DiffList title="Phát hiện định dạng mới" items={diff.changes.format_findings.added} tone="add" />
+                <DiffList title="Phát hiện định dạng đã xử lý" items={diff.changes.format_findings.removed} tone="remove" />
+                <DiffList title="Điểm mạnh mới được ghi nhận" items={diff.changes.experience.strengths_added} tone="add" />
+                <DiffList title="Điểm thiếu hụt phát sinh thêm" items={diff.changes.experience.gaps_added} tone="add" />
+              </div>
+            )}
+          </Card>
+
+          {/* Section 3: Pinned Notes */}
+          <Card className="p-6 bg-white border border-slate-200 shadow-soft-xs">
+            <div className="flex items-center gap-2 mb-3">
+              <Bookmark className="h-4.5 w-4.5 text-blue-600" />
+              <h2 className="text-sm font-bold text-slate-900">Sổ tay ghim mục tiêu</h2>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                value={pinBody}
+                onChange={(e) => setPinBody(e.target.value)}
+                placeholder="Ghim một việc cần làm hoặc lời khuyên quan trọng…"
+                className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-slate-900 focus:outline-none transition-colors"
+              />
+              <Button
+                size="sm"
+                disabled={busy || !pinBody.trim()}
+                onClick={() => void createPin()}
+              >
+                Ghim mục tiêu
+              </Button>
+            </div>
+
+            <ul className="mt-4 space-y-3">
+              {pins.length === 0 ? (
+                <li className="text-xs text-slate-500 italic">
+                  Chưa ghim mục nào. Hãy nhập nội dung ở trên để lưu trữ việc cần làm.
+                </li>
+              ) : (
+                pins.map((p) => (
+                  <li
+                    key={p.id}
+                    className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div>
+                      <p className="text-xs text-slate-800 font-medium leading-relaxed">{p.body}</p>
+                      <div className="mt-2 flex items-center gap-1.5 text-[10px]">
+                        <span className="rounded bg-slate-200/80 px-1.5 py-0.5 text-slate-600 font-mono">{p.section}</span>
+                        <Badge variant={p.status === 'done' ? 'success' : 'neutral'} size="sm">
+                          {p.status}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {(['todo', 'doing', 'done', 'archived'] as const).map((st) => (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => void setPinStatus(p.id, st)}
+                          className={`rounded px-2 py-1 text-[11px] font-medium border transition-colors ${
+                            p.status === st
+                              ? 'bg-slate-900 text-white border-slate-900'
+                              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          {st}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => void removePin(p.id)}
+                        className="p-1 text-slate-400 hover:text-red-600 transition-colors ml-1"
+                        aria-label="Xoá ghim"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </li>
+                ))
+              )}
+            </ul>
+          </Card>
+        </PageContent>
+      </PageScroll>
+    </PageFrame>
   );
 }
 
@@ -276,8 +346,8 @@ function DiffList({
   if (items.length === 0) return null;
   return (
     <div>
-      <p className={`font-medium ${tone === 'add' ? 'text-emerald-700' : 'text-amber-700'}`}>{title}</p>
-      <ul className="mt-1 list-disc space-y-1 pl-5 text-slate-700">
+      <p className={`font-semibold ${tone === 'add' ? 'text-emerald-700' : 'text-amber-700'}`}>{title}</p>
+      <ul className="mt-1 list-disc space-y-1 pl-4 text-slate-700">
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}

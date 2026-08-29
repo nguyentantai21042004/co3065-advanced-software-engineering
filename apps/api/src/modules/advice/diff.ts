@@ -1,5 +1,5 @@
-import type { CoachingReportWire } from '@aicoach/shared/contracts/cv';
-import type { AdviceDiffWire } from '@aicoach/shared/contracts/advice';
+import type { CoachingReportWire } from '../../contracts/cv.js';
+import type { AdviceDiffWire } from '../../contracts/advice.js';
 
 function norm(s: string): string {
   return s.normalize('NFC').trim().replace(/\s+/g, ' ');

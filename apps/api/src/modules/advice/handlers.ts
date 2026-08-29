@@ -1,7 +1,7 @@
 import {
   createAdvicePinBodySchema,
   patchAdvicePinBodySchema,
-} from '@aicoach/shared/contracts/advice';
+} from '../../contracts/advice.js';
 import type { AppContext } from '../../platform/auth.js';
 import type { RouteCtx } from '../../platform/http.js';
 import { ok } from '../../platform/response.js';

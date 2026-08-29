@@ -17,8 +17,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </Link>
 
           <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-            <div className="flex h-5.5 w-5.5 items-center justify-center rounded-lg bg-slate-900 text-white shadow-soft-xs">
-              <Compass className="h-3.5 w-3.5" />
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg overflow-hidden shadow-soft-xs">
+              <img src="/logo-mark.svg" alt="AI Coach" className="h-full w-full object-contain" />
             </div>
             <span>AI Coach Studio</span>
           </div>

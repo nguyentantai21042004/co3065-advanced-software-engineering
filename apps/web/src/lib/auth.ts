@@ -1,4 +1,4 @@
-import type { AuthData } from '@aicoach/shared/contracts/auth';
+import type { AuthData } from '@/types/wire';
 import { api } from './api';
 
 const TOKEN_KEY = 'accessToken';

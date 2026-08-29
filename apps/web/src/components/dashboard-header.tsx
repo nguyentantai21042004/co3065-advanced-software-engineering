@@ -47,8 +47,8 @@ export function DashboardHeader({ email }: DashboardHeaderProps) {
         {/* Brand */}
         <div className="flex items-center gap-8">
           <Link href="/dashboard/upload" className="flex items-center gap-3 group">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-soft-xs group-hover:bg-blue-600 transition-colors">
-              <Compass className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden shadow-soft-xs group-hover:scale-105 transition-transform">
+              <img src="/logo-mark.svg" alt="AI Coach" className="h-full w-full object-contain" />
             </div>
             <div>
               <span className="text-base font-bold tracking-tight text-slate-900">AI Coach</span>

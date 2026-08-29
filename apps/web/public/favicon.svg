@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-labelledby="title">
+  <title id="title">AI Coach favicon</title>
+  <rect x="1" y="1" width="30" height="30" rx="7" fill="var(--aicoach-slate, #0F172A)"/>
+  <path fill="var(--aicoach-on-brand, #FFFFFF)" d="M9 6h8l5 5v15H9a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/>
+  <path fill="var(--aicoach-blue, #2563EB)" d="M17 6v5h5l-5-5Z"/>
+  <circle cx="14.5" cy="18" r="5.5" fill="var(--aicoach-slate, #0F172A)"/>
+  <path fill="var(--aicoach-blue, #2563EB)" d="m16.5 16 2.7-1.3-1.3 2.7-2.4 2.4-1.4-1.4 2.4-2.4Z"/>
+  <path fill="var(--aicoach-on-brand, #FFFFFF)" d="m12.5 20-2.7 1.3 1.3-2.7 2.4-2.4 1.4 1.4-2.4 2.4Z"/>
+</svg>

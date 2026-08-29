@@ -1,4 +1,4 @@
-import type { CoachingReportWire } from '@aicoach/shared/contracts/cv';
+import type { CoachingReportWire } from '../contracts/cv.js';
 
 export interface StructuredCvHints {
   basic_info?: Record<string, unknown>;

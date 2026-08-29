@@ -5,7 +5,7 @@ import type {
   CvDataWire,
   CvListItemWire,
   UploadedFileWire,
-} from '@aicoach/shared/contracts/cv';
+} from '../../contracts/cv.js';
 import { badRequest, forbidden, notFound, payloadTooLarge } from '../../platform/errors.js';
 import {
   coachingReportFromAnalysis,

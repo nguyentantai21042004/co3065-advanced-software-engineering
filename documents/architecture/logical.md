@@ -4,9 +4,8 @@ Monorepo packages:
 
 | Package | Role |
 | --- | --- |
-| `@aicoach/shared` | Zod wire contracts both sides may import (`error_code` envelope, auth, CV) |
-| `@aicoach/api` | HTTP + worker |
-| `@aicoach/web` | UI surfaces |
+| `@aicoach/api` | HTTP + worker + `src/contracts` (Zod) |
+| `@aicoach/web` | UI + `src/types/wire` (types only) |
 
 ## API layers
 

@@ -1,4 +1,4 @@
-import { coachingReportSchema, type CoachingReportWire } from '@aicoach/shared/contracts/cv';
+import { coachingReportSchema, type CoachingReportWire } from '../contracts/cv.js';
 import { buildCoachingReport } from './coaching-report.js';
 import { decodeUnicodeEscapesDeep } from './cv-text.js';
 

@@ -46,8 +46,8 @@ export default function LandingPage() {
       <header className="sticky top-0 z-30 h-[72px] sm:h-20 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
         <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-soft-xs">
-              <Compass className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden shadow-soft-xs">
+              <img src="/logo-mark.svg" alt="AI Coach" className="h-full w-full object-contain" />
             </div>
             <div>
               <span className="text-base font-bold tracking-tight text-slate-900">AI Coach</span>
@@ -409,7 +409,7 @@ export default function LandingPage() {
       <footer className="border-t border-slate-200/80 bg-white py-4 text-xs text-slate-500">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2 font-semibold text-slate-800">
-            <Compass className="h-4 w-4 text-blue-600" />
+            <img src="/logo-mark.svg" alt="AI Coach" className="h-5 w-5 object-contain" />
             <span>AI Coach Career Studio</span>
           </div>
           <p className="text-slate-400">Hệ thống phân tích hồ sơ ứng viên chuyên nghiệp</p>

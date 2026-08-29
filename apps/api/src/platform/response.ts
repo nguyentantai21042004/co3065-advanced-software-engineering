@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import type { ApiEnvelope } from '@aicoach/shared/contracts/api';
+import type { ApiEnvelope } from '../contracts/api.js';
 
 export type OkStatus = 200 | 201;
 

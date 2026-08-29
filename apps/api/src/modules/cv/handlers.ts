@@ -1,4 +1,4 @@
-import { supportedTypes } from '@aicoach/shared/contracts/cv';
+import { supportedTypes } from '../../contracts/cv.js';
 import type { AppContext } from '../../platform/auth.js';
 import type { RouteCtx } from '../../platform/http.js';
 import { badRequest } from '../../platform/errors.js';

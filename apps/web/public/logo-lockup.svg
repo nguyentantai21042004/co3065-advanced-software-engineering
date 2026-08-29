@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 72" role="img" aria-labelledby="title desc">
+  <title id="title">AI Coach</title>
+  <desc id="desc">Career Studio, CV analysis and career guidance</desc>
+  <g transform="translate(4 8) scale(1.167)">
+    <path fill="var(--aicoach-slate, #0F172A)" d="M11 3h20l8 8v29a5 5 0 0 1-5 5H14a5 5 0 0 1-5-5V5a2 2 0 0 1 2-2Z"/>
+    <path fill="var(--aicoach-blue, #2563EB)" d="M31 3v8h8L31 3Z"/>
+    <circle cx="24" cy="25" r="10" fill="none" stroke="var(--aicoach-on-brand, #FFFFFF)" stroke-width="2.5"/>
+    <path fill="var(--aicoach-blue, #2563EB)" d="m27.4 21.6 4.5-2.1-2.1 4.5-4.2 4.2-2.4-2.4 4.2-4.2Z"/>
+    <path fill="var(--aicoach-on-brand, #FFFFFF)" d="m20.6 28.4-4.5 2.1 2.1-4.5 4.2-4.2 2.4 2.4-4.2 4.2Z"/>
+    <circle cx="24" cy="25" r="1.8" fill="var(--aicoach-slate, #0F172A)"/>
+  </g>
+  <text x="76" y="34" fill="var(--aicoach-slate, #0F172A)" font-family="'Be Vietnam Pro', Arial, sans-serif" font-size="27" font-weight="700" letter-spacing="-.6">AI Coach</text>
+  <text x="77" y="52" fill="var(--aicoach-muted, #64748B)" font-family="'Be Vietnam Pro', Arial, sans-serif" font-size="10" font-weight="600" letter-spacing="1.6">CAREER STUDIO</text>
+</svg>

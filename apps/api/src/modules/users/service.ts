@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { AuthData } from '@aicoach/shared/contracts/auth';
+import type { AuthData } from '../../contracts/auth.js';
 import type { Auth } from '../../platform/auth.js';
 import { badRequest, unauthenticated } from '../../platform/errors.js';
 import { hashPassword, verifyPassword } from '../../platform/password.js';

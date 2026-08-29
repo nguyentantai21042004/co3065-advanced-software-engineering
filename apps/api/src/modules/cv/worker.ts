@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { CoachingReportWire } from '@aicoach/shared/contracts/cv';
+import type { CoachingReportWire } from '../../contracts/cv.js';
 import type { Analyzer } from '../../platform/llm.js';
 import type { TextExtractor } from '../../platform/extract.js';
 import type { FileStorage } from '../../platform/storage.js';
