@@ -10,14 +10,34 @@ Monorepo packages:
 
 ## API layers
 
+```mermaid
+flowchart LR
+  http["HTTP request"] --> routes["routes.ts"]
+  routes --> handlers["handlers.ts"]
+  handlers --> service["service.ts"]
+  service --> repo["repo.ts"]
+  repo --> sql[("SQL")]
+
+  handlers --- auth["Auth JWT"]
+  handlers --- storage["FileStorage"]
+  service --- queue["JobQueue"]
+  queue --> worker["worker.ts"]
+  worker --> extractor["extractor"]
+  worker --> analyzer["analyzer"]
+  extractor --> repo
+  analyzer --> repo
+```
+
+ASCII equivalent:
+
 ```
 HTTP  →  routes.ts  →  handlers.ts  →  service.ts  →  repo.ts  →  SQL
-                         │
-                         ├─ Auth (JWT subject = email)
-                         ├─ FileStorage (local | S3)
-                         └─ JobQueue (setImmediate)
-                                │
-                                └─ worker.ts → extractor → analyzer → repo
+                         |
+                         +-- Auth JWT subject = email
+                         +-- FileStorage local | S3
+                         +-- JobQueue setImmediate
+                                |
+                                +-- worker.ts → extractor → analyzer → repo
 ```
 
 - **Routes** register paths and attach `auth.protect` where needed. They do not parse bodies.
@@ -25,7 +45,35 @@ HTTP  →  routes.ts  →  handlers.ts  →  service.ts  →  repo.ts  →  SQL
 - **Service** owns business rules (file type, ownership, enqueue extract).
 - **Repo** owns SQL for its tables. Repos are constructed once in `platform/composition.ts`.
 
-Modules:
+## Modules
+
+```mermaid
+flowchart TB
+  subgraph api["apps/api/src/modules"]
+    users["users<br/>register / login"]
+    cv["cv<br/>upload extract data list types worker"]
+    system["system<br/>health"]
+  end
+
+  subgraph platform["apps/api/src/platform"]
+    http["http / auth / validate / response"]
+    db["db"]
+    store["storage"]
+    q["queue"]
+    llm["llm"]
+    extract["extract"]
+  end
+
+  users --> http
+  cv --> http
+  system --> http
+  users --> db
+  cv --> db
+  cv --> store
+  cv --> q
+  cv --> llm
+  cv --> extract
+```
 
 - `users` — register / login
 - `cv` — upload, extract, data, list, supported-types, worker
@@ -42,6 +90,29 @@ JSON is snake_case, matching legacy Jackson `SNAKE_CASE`:
 CV analysis fields (`basic_info`, `education`, `work_experience`, `skills`, `certificates_languages`, `analysis_result`) are JSON objects, not quoted strings (legacy `@JsonRawValue`).
 
 ## Async extract
+
+```mermaid
+sequenceDiagram
+  participant Client
+  participant API as handlers/service
+  participant Q as JobQueue
+  participant W as worker
+  participant FS as FileStorage
+  participant DB as repo
+
+  Client->>API: POST /api/cv/extract/{file_id}
+  API->>Q: enqueue fileId
+  API-->>Client: 200 Task accepted
+  Q->>W: fileId
+  W->>FS: get bytes
+  W->>W: extract text
+  W->>DB: insert extraction_result
+  W->>W: Gemini or stub analyze
+  W->>DB: insert cv_analysis_result
+  Client->>API: GET /api/cv/data/{file_id}
+  API->>DB: load extraction + analysis
+  API-->>Client: CV data envelope
+```
 
 `POST /api/cv/extract/{file_id}` enqueues `{ fileId }` and returns immediately. The in-process worker:
 
